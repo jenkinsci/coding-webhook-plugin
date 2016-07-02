@@ -1,0 +1,16 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
+    <f:entry title="WebHook token(Optional)" field="webHookToken" help="/plugin/coding/help/help-webhook-token.html">
+        <f:textbox default=""/>
+    </f:entry>
+    <f:entry title="Build on Merge Request Events" field="triggerOnMergeRequest" help="/plugin/coding/help/help-merge-request.html">
+        <f:checkbox default="true"/>
+    </f:entry>
+    <f:entry title="Build on Push Events" field="triggerOnPush" help="/plugin/coding/help/help-push.html">
+        <f:checkbox default="true"/>
+    </f:entry>
+    <f:entry title="Enable [ci-skip]" field="ciSkip" help="/plugin/coding/help/help-ci-skip.html">
+        <f:checkbox default="true"/>
+    </f:entry>
+</j:jelly>

@@ -1,0 +1,11 @@
+# Gradle Files
+.gradle
+build/
+
+# IntelliJ metadata.
+*.iml
+*.ipr
+*.iws
+.idea/
+
+work/

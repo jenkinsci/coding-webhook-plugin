@@ -1,0 +1,26 @@
+<div>
+    <p>Trigger builds on merge request events.</p>
+    <b>NOTE:</b> This option requires additional git scm configuration for the job: <br/>
+    <ul>
+        <li>1. Goto job <b>Configure</b> page</li>
+        <li>2. Goto <b>Source Code Management</b></li>
+        <li>
+            3. Select <b>Git</b>, under <b>Advanced</b>, set <b>Name</b> to <code>origin</code> and:
+            <ul>
+                <li>If the project is private, set <b>refspec</b> to
+                    <code>+refs/heads/*:refs/remotes/origin/* +refs/merge/*/MERGE:refs/remotes/origin/merge/*</code>
+                </li>
+                <li>If the project is public, set <b>refspec</b> to
+                    <code>+refs/heads/*:refs/remotes/origin/* +refs/pull/*/MERGE:refs/remotes/origin/pull/*</code>
+                </li>
+            </ul>
+        </li>
+        <li>
+            4. Under <b>Branches to build</b>, add a branch
+            <code>refs/remotes/origin/merge/*</code> (for private project)
+            or
+            <code>refs/remotes/origin/pull/*</code> (for public project)
+        </li>
+        <li>5. Click <b>Apply</b></li>
+    </ul>
+</div>

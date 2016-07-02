@@ -1,0 +1,6 @@
+<?jelly escape-by-default='true'?>
+<div>
+  This plugin integrates
+  <a href="https://coding.net/">Coding</a>
+  with Jenkins.
+</div>

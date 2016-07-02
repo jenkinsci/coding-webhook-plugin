@@ -1,0 +1,13 @@
+<?jelly escape-by-default='true'?>
+<div>
+    <p>
+        Configure your Jenkins instance to handle
+        <a href="https://coding.net/help/doc/git/webhook.html" target="_blank">webhook</a>
+        request sent by <a href="https://coding.net" target="_blank">Coding</a> and triggers
+        builds for pushes and merge/pull requests.
+    </p>
+
+    To getting started, you need to create an WebHook on coding using the <b>WebHook URL</b>
+    shown by this option, and fill the <b>WebHook token</b> field with the token value used
+    when creating the WebHook.
+</div>

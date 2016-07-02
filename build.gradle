@@ -1,0 +1,58 @@
+plugins {
+    id 'org.jenkins-ci.jpi' version '0.18.1'
+    id 'idea'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "http://repo.jenkins-ci.org/public/"
+    }
+}
+
+dependencies {
+    jenkinsPlugins 'org.jenkins-ci.plugins:git:2.4.1@jar'
+    jenkinsPlugins 'org.jenkins-ci.plugins:git-client:1.19.0@jar'
+
+    compile 'org.projectlombok:lombok:1.16.8'
+    compile 'com.google.code.gson:gson:2.6.1'
+    compile 'org.eclipse.jgit:org.eclipse.jgit:3.5.2.201411120430-r'
+}
+
+group = 'net.coding.jenkins.plugins'
+version = '1.0.0-SNAPSHOT'
+description = 'Jenkins plugin for Coding(https://coding.net)'
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14'
+}
+
+jenkinsPlugin {
+    // version of Jenkins core this plugin depends on, must be 1.420 or later
+    coreVersion = '1.609.3'
+
+    // ID of the plugin, defaults to the project name without trailing '-plugin'
+    shortName = 'coding'
+
+    // human-readable name of plugin
+    displayName = 'Jenkins Coding Plugin'
+
+    // URL for plugin on Jenkins wiki or elsewhere
+    url = 'http://wiki.jenkins-ci.org/display/JENKINS/Coding+Plugin'
+
+    // enable injection of additional tests for checking the syntax of Jelly and other things
+    disabledTestInjection = false
+
+    // plugin file extension, either 'jpi' or 'hpi', defaults to 'hpi'
+    fileExtension = 'hpi'
+
+    // the developers section is optional, and corresponds to the POM developers section
+    developers {
+        developer {
+            id 'tsl0922'
+            name 'Shuanglei Tao'
+            email 'tsl0922@gmail.com'
+        }
+    }
+}
