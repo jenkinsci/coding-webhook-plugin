@@ -1,0 +1,26 @@
+<div>
+    <p>收到 merge/pull request 事件时触发构建。</p>
+    <b>注意:</b> 这个选项需要一些额外的配置才能工作:<br/>
+    <ul>
+        <li>1. 打开任务的 <b>配置</b> 页面</li>
+        <li>2. 进入 <b>源码管理</b></li>
+        <li>
+            3. 选择 <b>Git</b>, 进入 <b>高级</b>, 设置 <b>Name</b> 为 <code>origin</code>, 然后:
+            <ul>
+                <li>如果是私有项目, 设置 <b>refspec</b> 为
+                    <code>+refs/heads/*:refs/remotes/origin/* +refs/merge/*/MERGE:refs/remotes/origin/merge/*</code>
+                </li>
+                <li>如果是公开项目, 设置 <b>refspec</b> to
+                    <code>+refs/heads/*:refs/remotes/origin/* +refs/pull/*/MERGE:refs/remotes/origin/pull/*</code>
+                </li>
+            </ul>
+        </li>
+        <li>
+            4. 在 <b>要构建的分支</b> 下添加一个条目:
+            <code>refs/remotes/origin/merge/*</code> (私有项目)
+            或者
+            <code>refs/remotes/origin/pull/*</code> (公开项目)
+        </li>
+        <li>5. 点击 <b>应用</b></li>
+    </ul>
+</div>

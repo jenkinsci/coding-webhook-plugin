@@ -24,12 +24,14 @@ import jenkins.model.ParameterizedJobMixIn;
 import jenkins.triggers.SCMTriggerItem;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * @author tsl0922
  */
+@EqualsAndHashCode
 @Data
 public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(CodingPushTrigger.class.getName());
@@ -91,12 +93,12 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
             Job<?, ?> project = retrieveCurrentJob();
             if (project != null) {
                 try {
-                    return "Build when a change is pushed to Coding, WebHook URL: " + retrieveProjectUrl(project);
+                    return Messages.coding_trigger_title(retrieveProjectUrl(project));
                 } catch (IllegalStateException e) {
                     // nothing to do
                 }
             }
-            return "Build when a change is pushed to Coding, unknown URL";
+            return Messages.coding_trigger_title_unknown();
         }
 
         private StringBuilder retrieveProjectUrl(Job<?, ?> project) {

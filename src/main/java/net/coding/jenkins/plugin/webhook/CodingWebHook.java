@@ -42,7 +42,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 @Extension
 public class CodingWebHook implements UnprotectedRootAction {
-    public static final String WEBHOOK_URL = "project";
+    public static final String WEBHOOK_URL = "coding";
     private static final Logger LOGGER = Logger.getLogger(CodingWebHook.class.getName());
 
     @Override
