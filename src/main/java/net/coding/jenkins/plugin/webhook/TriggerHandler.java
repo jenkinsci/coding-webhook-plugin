@@ -36,6 +36,7 @@ public class TriggerHandler {
     private static final String PUSH_EVENT = "push";
     private static final String PULL_REQUEST_EVENT = "pull_request";
     private static final String MERGE_REQUEST_EVENT = "merge_request";
+    private static final String ACTION_CREATE = "create";
 
     private static final String NO_COMMIT = "0000000000000000000000000000000000000000";
     private static final String CI_SKIP = "[ci-skip]";
@@ -63,12 +64,16 @@ public class TriggerHandler {
                         }
                         break;
                     case MERGE_REQUEST_EVENT:
-                        shouldTrigger = triggerOnMergeRequest;
-                        actionType = ActionType.MR;
+                        if (ACTION_CREATE.equals(hook.getMerge_request().getAction())) {
+                            shouldTrigger = triggerOnMergeRequest;
+                            actionType = ActionType.MR;
+                        }
                         break;
                     case PULL_REQUEST_EVENT:
-                        shouldTrigger = triggerOnMergeRequest;
-                        actionType = ActionType.PR;
+                        if (ACTION_CREATE.equals(hook.getPull_request().getAction())) {
+                            shouldTrigger = triggerOnMergeRequest;
+                            actionType = ActionType.PR;
+                        }
                         break;
                     default:
                         break;
