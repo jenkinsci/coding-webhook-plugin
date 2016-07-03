@@ -3,6 +3,9 @@ package net.coding.jenkins.plugin;
 import net.coding.jenkins.plugin.model.WebHook;
 import net.coding.jenkins.plugin.webhook.CodingWebHook;
 import net.coding.jenkins.plugin.webhook.TriggerHandler;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilterConfig;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilterFactory;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilterType;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.Ancestor;
@@ -10,6 +13,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.io.ObjectStreamException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,21 +44,46 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private boolean triggerOnPush = true;
     private boolean triggerOnMergeRequest = true;
     private boolean ciSkip = true;
+    private BranchFilterType branchFilterType;
+    private String includeBranchesSpec;
+    private String excludeBranchesSpec;
+    private String targetBranchRegex;
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
-    private TriggerHandler triggerHandler;
+    private transient TriggerHandler triggerHandler;
 
     @DataBoundConstructor
     public CodingPushTrigger(String webHookToken, boolean triggerOnPush,
-                             boolean triggerOnMergeRequest, boolean ciSkip)
+                             boolean triggerOnMergeRequest, boolean ciSkip,
+                             BranchFilterType branchFilterType, String includeBranchesSpec,
+                             String excludeBranchesSpec, String targetBranchRegex)
     {
         this.webHookToken = webHookToken;
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
         this.ciSkip = ciSkip;
+        this.branchFilterType = branchFilterType;
+        this.includeBranchesSpec = includeBranchesSpec;
+        this.excludeBranchesSpec = excludeBranchesSpec;
+        this.targetBranchRegex = targetBranchRegex;
 
-        this.triggerHandler = new TriggerHandler(this.triggerOnPush, this.triggerOnMergeRequest);
+        initializeTriggerHandler();
+    }
+
+    private void initializeTriggerHandler() {
+        BranchFilterConfig branchFilterConfig = new BranchFilterConfig(
+                branchFilterType, includeBranchesSpec, excludeBranchesSpec, targetBranchRegex);
+        this.triggerHandler = new TriggerHandler(
+                this.triggerOnPush, this.triggerOnMergeRequest,
+                BranchFilterFactory.newBranchFilter(branchFilterConfig)
+        );
+    }
+
+    @Override
+    protected Object readResolve() throws ObjectStreamException {
+        initializeTriggerHandler();
+        return super.readResolve();
     }
 
     public void onPost(WebHook webHook, String event) {

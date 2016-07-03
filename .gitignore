@@ -8,4 +8,6 @@ build/
 *.iws
 .idea/
 
+# Jenkins files
 work/
+out/

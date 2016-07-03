@@ -7,6 +7,8 @@ import lombok.Data;
  */
 @Data
 public class MergeRequest {
+    private static final String ACTION_CREATE = "create";
+
     private String title;
     private String body;
     private String merge_commit_sha;
@@ -17,4 +19,8 @@ public class MergeRequest {
     private String source_branch;
     private String web_url;
     private User user;
+
+    public boolean isCreate() {
+        return ACTION_CREATE.equals(action);
+    }
 }

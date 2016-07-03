@@ -1,0 +1,12 @@
+<div>
+    <div>
+        The target branch regex allows to limit the execution of this job to certain branches. Any
+        branch matching the specified pattern triggers
+        the job. No filtering is performed if the field is left empty.
+        <p>Examples:</p>
+        <ul>
+            <li>Allow execution for debug and release branches: <code>(.*debug.*|.*release.*)</code></li>
+            <li>Ignore any branch with `Release` or `release` as subword: <code>^(?:(?![R|r]elease).)*$</code></li>
+        </ul>
+    </div>
+</div>

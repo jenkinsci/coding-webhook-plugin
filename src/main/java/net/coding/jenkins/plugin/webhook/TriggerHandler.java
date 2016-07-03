@@ -7,6 +7,7 @@ import net.coding.jenkins.plugin.model.Commit;
 import net.coding.jenkins.plugin.model.MergeRequest;
 import net.coding.jenkins.plugin.model.PullRequest;
 import net.coding.jenkins.plugin.model.WebHook;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilter;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.transport.URIish;
@@ -36,17 +37,18 @@ public class TriggerHandler {
     private static final String PUSH_EVENT = "push";
     private static final String PULL_REQUEST_EVENT = "pull_request";
     private static final String MERGE_REQUEST_EVENT = "merge_request";
-    private static final String ACTION_CREATE = "create";
 
     private static final String NO_COMMIT = "0000000000000000000000000000000000000000";
     private static final String CI_SKIP = "[ci-skip]";
 
     private boolean triggerOnPush;
     private boolean triggerOnMergeRequest;
+    private BranchFilter branchFilter;
 
-    public TriggerHandler(boolean triggerOnPush, boolean triggerOnMergeRequest) {
+    public TriggerHandler(boolean triggerOnPush, boolean triggerOnMergeRequest, BranchFilter branchFilter) {
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
+        this.branchFilter = branchFilter;
     }
 
     public void handle(Job<?, ?> job, WebHook hook, String event, boolean ciSkip) {
@@ -56,23 +58,29 @@ public class TriggerHandler {
             if (trigger != null) {
                 boolean shouldTrigger = false;
                 CauseData.ActionType actionType = null;
+                String branch = null;
                 switch (event) {
                     case PUSH_EVENT:
                         if (isNoRemoveBranchPush(hook)) {
                             shouldTrigger = triggerOnPush;
                             actionType = ActionType.PUSH;
+                            branch = shortenRef(hook.getRef());
                         }
                         break;
                     case MERGE_REQUEST_EVENT:
-                        if (ACTION_CREATE.equals(hook.getMerge_request().getAction())) {
+                        MergeRequest mr = hook.getMerge_request();
+                        if (mr.isCreate()) {
                             shouldTrigger = triggerOnMergeRequest;
                             actionType = ActionType.MR;
+                            branch = mr.getTarget_branch();
                         }
                         break;
                     case PULL_REQUEST_EVENT:
-                        if (ACTION_CREATE.equals(hook.getPull_request().getAction())) {
+                        PullRequest pr = hook.getPull_request();
+                        if (pr.isCreate()) {
                             shouldTrigger = triggerOnMergeRequest;
                             actionType = ActionType.PR;
+                            branch = pr.getTarget_branch();
                         }
                         break;
                     default:
@@ -80,6 +88,10 @@ public class TriggerHandler {
                 }
                 if (ciSkip && isCiSkip(hook, actionType)) {
                     LOGGER.log(Level.INFO, "Skipping due to ci-skip.");
+                    return;
+                }
+                if (!branchFilter.isBranchAllowed(branch)) {
+                    LOGGER.log(Level.INFO, "Branch {0} is not allowed", branch);
                     return;
                 }
                 if (shouldTrigger) {

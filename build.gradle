@@ -29,25 +29,11 @@ task wrapper(type: Wrapper) {
 }
 
 jenkinsPlugin {
-    // version of Jenkins core this plugin depends on, must be 1.420 or later
     coreVersion = '1.609.3'
-
-    // ID of the plugin, defaults to the project name without trailing '-plugin'
     shortName = 'coding'
-
-    // human-readable name of plugin
     displayName = 'Jenkins Coding Plugin'
+    disabledTestInjection = true
 
-    // URL for plugin on Jenkins wiki or elsewhere
-    url = 'http://wiki.jenkins-ci.org/display/JENKINS/Coding+Plugin'
-
-    // enable injection of additional tests for checking the syntax of Jelly and other things
-    disabledTestInjection = false
-
-    // plugin file extension, either 'jpi' or 'hpi', defaults to 'hpi'
-    fileExtension = 'hpi'
-
-    // the developers section is optional, and corresponds to the POM developers section
     developers {
         developer {
             id 'tsl0922'

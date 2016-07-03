@@ -1,0 +1,10 @@
+<div>
+  <div>
+      使用目标分支正则表达式可以限制哪些分支能够触发构建任务。所有匹配此正则的分支都可以触发构建任务, 如果此正则为空则所有分支都可以触发。
+      <p>例子:</p>
+      <ul>
+          <li>允许 debug 和 release 分支触发任务: <code>(.*debug.*|.*release.*)</code></li>
+          <li>忽略所有名称里包含 Release 或 release 的分支: <code>^(?:(?![R|r]elease).)*$</code></li>
+      </ul>
+  </div>
+</div>

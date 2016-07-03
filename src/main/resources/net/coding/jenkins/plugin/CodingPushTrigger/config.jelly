@@ -13,4 +13,29 @@
     <f:entry title="${%coding.webhook.build.ciskip}" field="ciSkip" help="/plugin/coding/help/help-ci-skip.html">
         <f:checkbox default="true"/>
     </f:entry>
+    <f:block>
+        <table style="margin-left:10px">
+            <f:radioBlock name="branchFilterType" value="All" title="${%coding.webhook.build.branch.all}"
+                          checked="${instance.branchFilterType == null || instance.branchFilterType == 'All'}"
+                          inline="true" help="/plugin/coding/help/help-noBranchFiltering.html"/>
+            <f:radioBlock name="branchFilterType" value="NameBasedFilter" title="${%coding.webhook.build.branch.filter.name}"
+                          checked="${instance.branchFilterType == 'NameBasedFilter'}" inline="true"
+                          help="/plugin/coding/help/help-allowedBranches.html">
+                <f:entry title="${%coding.webhook.build.branch.filter.include}">
+                    <f:textbox name="includeBranchesSpec" field="includeBranchesSpec" autoCompleteDelimChar=","/>
+                </f:entry>
+                <f:entry title="${%coding.webhook.build.branch.filter.exclude}">
+                    <f:textbox name="excludeBranchesSpec" field="excludeBranchesSpec" autoCompleteDelimChar=","/>
+                </f:entry>
+            </f:radioBlock>
+
+            <f:radioBlock name="branchFilterType" value="RegexBasedFilter" title="${%coding.webhook.build.branch.filter.regex}"
+                          checked="${instance.branchFilterType == 'RegexBasedFilter'}" inline="true"
+                          help="/plugin/coding/help/help-filterBranchesByRegex.html">
+                <f:entry title="${%coding.webhook.build.branch.filter.regex.value}">
+                    <f:textbox name="targetBranchRegex" field="targetBranchRegex"/>
+                </f:entry>
+            </f:radioBlock>
+        </table>
+    </f:block>
 </j:jelly>
