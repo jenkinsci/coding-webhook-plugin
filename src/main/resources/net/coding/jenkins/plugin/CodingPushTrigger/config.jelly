@@ -7,7 +7,10 @@
     <f:entry title="${%coding.webhook.build.on.mrpr}" field="triggerOnMergeRequest" help="/plugin/coding/help/help-merge-request.html">
         <f:checkbox default="true"/>
     </f:entry>
-    <f:entry title="${%coding.webhook.build.on.push}" field="triggerOnPush" help="/plugin/coding/help/help-push.html">
+    <f:entry title="${%coding.webhook.build.on.push}" field="triggerOnPush">
+        <f:checkbox default="true"/>
+    </f:entry>
+    <f:entry title="${%coding.webhook.build.note}" field="addResultNote">
         <f:checkbox default="true"/>
     </f:entry>
     <f:entry title="${%coding.webhook.build.ciskip}" field="ciSkip" help="/plugin/coding/help/help-ci-skip.html">

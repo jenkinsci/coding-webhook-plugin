@@ -43,11 +43,13 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private String webHookToken = "";
     private boolean triggerOnPush = true;
     private boolean triggerOnMergeRequest = true;
+    private boolean addResultNote = true;
     private boolean ciSkip = true;
     private BranchFilterType branchFilterType;
     private String includeBranchesSpec;
     private String excludeBranchesSpec;
     private String targetBranchRegex;
+    private String apiToken = "";
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
@@ -55,13 +57,14 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
 
     @DataBoundConstructor
     public CodingPushTrigger(String webHookToken, boolean triggerOnPush,
-                             boolean triggerOnMergeRequest, boolean ciSkip,
+                             boolean triggerOnMergeRequest, boolean addResultNote, boolean ciSkip,
                              BranchFilterType branchFilterType, String includeBranchesSpec,
                              String excludeBranchesSpec, String targetBranchRegex)
     {
         this.webHookToken = webHookToken;
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
+        this.addResultNote = addResultNote;
         this.ciSkip = ciSkip;
         this.branchFilterType = branchFilterType;
         this.includeBranchesSpec = includeBranchesSpec;

@@ -9,6 +9,7 @@ import lombok.Data;
 public class MergeRequest {
     private static final String ACTION_CREATE = "create";
 
+    private Integer id;
     private String title;
     private String body;
     private String merge_commit_sha;

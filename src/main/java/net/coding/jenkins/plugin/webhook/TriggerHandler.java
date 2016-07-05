@@ -57,7 +57,7 @@ public class TriggerHandler {
             final CodingPushTrigger trigger = project.getTrigger(CodingPushTrigger.class);
             if (trigger != null) {
                 boolean shouldTrigger = false;
-                CauseData.ActionType actionType = null;
+                ActionType actionType = null;
                 String branch = null;
                 switch (event) {
                     case PUSH_EVENT:
@@ -86,6 +86,9 @@ public class TriggerHandler {
                     default:
                         break;
                 }
+                if (actionType == null) {
+                    return;
+                }
                 if (ciSkip && isCiSkip(hook, actionType)) {
                     LOGGER.log(Level.INFO, "Skipping due to ci-skip.");
                     return;
@@ -112,7 +115,7 @@ public class TriggerHandler {
         asParameterizedJobMixIn(job).scheduleBuild2(projectBuildDelay, actions);
     }
 
-    private Action[] createActions(Job<?, ?> job, WebHook hook, CauseData.ActionType actionType) {
+    private Action[] createActions(Job<?, ?> job, WebHook hook, ActionType actionType) {
         List<Action> actions = new ArrayList<>();
         actions.add(new CauseAction(new CodingWebHookCause(buildCauseData(hook, actionType))));
         try {
@@ -124,7 +127,7 @@ public class TriggerHandler {
         return actions.toArray(new Action[actions.size()]);
     }
 
-    private RevisionParameterAction createRevisionParameter(WebHook hook, CauseData.ActionType actionType) {
+    private RevisionParameterAction createRevisionParameter(WebHook hook, ActionType actionType) {
         return new RevisionParameterAction(retrieveRevisionToBuild(hook, actionType), createUrIish(hook));
     }
 
@@ -153,7 +156,7 @@ public class TriggerHandler {
         return revision;
     }
 
-    private CauseData buildCauseData(WebHook hook, CauseData.ActionType actionType) {
+    private CauseData buildCauseData(WebHook hook, ActionType actionType) {
         CauseData data = new CauseData();
         data.setActionType(actionType);
         data.setToken(hook.getToken());
@@ -164,26 +167,41 @@ public class TriggerHandler {
         data.setRef(hook.getRef());
         data.setBefore(hook.getBefore());
         data.setAfter(hook.getAfter());
+        data.setCommitId(hook.getAfter());
         data.setRepoUrl(hook.getRepository().getSsh_url());
+        data.setProjectPath(hook.getRepository().projectPath());
         if (hook.getMerge_request() != null) {
             MergeRequest mr = hook.getMerge_request();
+            data.setMergeRequestId(mr.getId());
+            data.setCommitId(mr.getMerge_commit_sha());
             data.setMergeRequestIid(mr.getNumber());
             data.setMergeRequestTitle(mr.getTitle());
             data.setMergeRequestBody(mr.getBody());
             data.setMergeRequestUrl(mr.getWeb_url());
             data.setSourceBranch(shortenRef(mr.getSource_branch()));
             data.setTargetBranch(shortenRef(mr.getTarget_branch()));
+            if (mr.getUser() != null) {
+                data.setUserName(mr.getUser().getName());
+                data.setUserUrl(mr.getUser().getWeb_url());
+            }
         }
         if (hook.getPull_request() != null) {
             PullRequest pr = hook.getPull_request();
+            data.setMergeRequestId(pr.getId());
+            data.setCommitId(pr.getMerge_commit_sha());
             data.setMergeRequestIid(pr.getNumber());
             data.setMergeRequestTitle(pr.getTitle());
             data.setMergeRequestBody(pr.getBody());
             data.setMergeRequestUrl(pr.getWeb_url());
+            data.setSourceProjectPath(pr.getSource_repository().projectPath());
             data.setSourceBranch(shortenRef(pr.getSource_branch()));
             data.setSourceRepoUrl(pr.getSource_repository().getSsh_url());
             data.setSourceUser(pr.getSource_repository().getOwner().getGlobal_key());
             data.setTargetBranch(shortenRef(pr.getTarget_branch()));
+            if (pr.getUser() != null) {
+                data.setUserName(pr.getUser().getName());
+                data.setUserUrl(pr.getUser().getWeb_url());
+            }
         }
         return data;
     }

@@ -18,6 +18,7 @@ dependencies {
     compile 'org.projectlombok:lombok:1.16.8'
     compile 'com.google.code.gson:gson:2.6.1'
     compile 'org.eclipse.jgit:org.eclipse.jgit:3.5.2.201411120430-r'
+    compile 'org.apache.httpcomponents:httpclient:4.5'
 }
 
 group = 'net.coding.jenkins.plugins'
