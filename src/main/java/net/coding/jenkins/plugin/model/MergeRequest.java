@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 public class MergeRequest {
     private static final String ACTION_CREATE = "create";
+    private static final String ACTION_SYNCHRONIZE = "synchronize";
 
     private Integer id;
     private String title;
@@ -23,5 +24,9 @@ public class MergeRequest {
 
     public boolean isCreate() {
         return ACTION_CREATE.equals(action);
+    }
+
+    public boolean isPush() {
+        return ACTION_SYNCHRONIZE.equals(action);
     }
 }

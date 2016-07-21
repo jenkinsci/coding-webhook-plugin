@@ -67,13 +67,14 @@ public class CodingWebHook implements UnprotectedRootAction {
         if (project == null) {
             throw HttpResponses.notFound();
         }
+        LOGGER.log(Level.INFO, "Resolved project: {0}", project.getName());
 
         String method = request.getMethod();
         switch (method) {
             case "POST":
                 String eventHeader = request.getHeader("X-Coding-Event");
                 if (eventHeader == null) {
-                    LOGGER.log(Level.FINE, "Missing X-Coding-Event header");
+                    LOGGER.log(Level.INFO, "Missing X-Coding-Event header");
                     return;
                 }
                 if (StringUtils.equals(eventHeader, "ping")) {
@@ -81,6 +82,7 @@ public class CodingWebHook implements UnprotectedRootAction {
                     return;
                 }
                 String json = getRequestBody(request);
+                LOGGER.log(Level.INFO, "WebHook payload: {0}", json);
                 WebHook webHook = new Gson().fromJson(json, WebHook.class);
                 ACL.impersonate(ACL.SYSTEM, () -> {
                     CodingPushTrigger trigger = CodingPushTrigger.getFromJob(project);
@@ -121,7 +123,7 @@ public class CodingWebHook implements UnprotectedRootAction {
                         return (Job<?, ?>) item;
                     }
                 }
-                LOGGER.log(Level.FINE, "No project found: {0}, {1}",
+                LOGGER.log(Level.INFO, "No project found: {0}, {1}",
                         new String[]{projectName, Joiner.on('/').join(restOfPathParts)});
                 return null;
             }

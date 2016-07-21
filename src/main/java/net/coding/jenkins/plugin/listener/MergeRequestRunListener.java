@@ -8,6 +8,7 @@ import net.coding.jenkins.plugin.cause.CodingWebHookCause;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -62,7 +63,7 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
             }
             String apiToken = trigger.getApiToken();
             String projectPath = cause.getData().getProjectPath();
-            if (!apiToken.isEmpty() && !projectPath.isEmpty()) {
+            if (!apiToken.isEmpty() && !projectPath.isEmpty() && build.getResult() != Result.ABORTED) {
                 addResultNote(
                         apiToken, getBuildUrl(build),
                         cause.getData().getCommitId(),
@@ -81,7 +82,9 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
         HttpPost httpPost = new HttpPost(String.format("%s/git/line_notes", getApiUrl(projectPath)));
         httpPost.setHeader(new BasicHeader("Cookie", String.format("sid=%s", apiToken)));
         List<NameValuePair> nvps = new ArrayList<>();
-        nvps.add(new BasicNameValuePair("commitId", commitId));
+        if (StringUtils.equals(targetType, "Commit")) {
+            nvps.add(new BasicNameValuePair("commitId", commitId));
+        }
         nvps.add(new BasicNameValuePair("noteable_type", targetType));
         nvps.add(new BasicNameValuePair("noteable_id", String.valueOf(targetId)));
         nvps.add(new BasicNameValuePair("content", content));

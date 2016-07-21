@@ -69,7 +69,7 @@ public class TriggerHandler {
                         break;
                     case MERGE_REQUEST_EVENT:
                         MergeRequest mr = hook.getMerge_request();
-                        if (mr.isCreate()) {
+                        if (mr.isCreate() || mr.isPush()) {
                             shouldTrigger = triggerOnMergeRequest;
                             actionType = ActionType.MR;
                             branch = mr.getTarget_branch();
@@ -77,7 +77,7 @@ public class TriggerHandler {
                         break;
                     case PULL_REQUEST_EVENT:
                         PullRequest pr = hook.getPull_request();
-                        if (pr.isCreate()) {
+                        if (pr.isCreate() || pr.isPush()) {
                             shouldTrigger = triggerOnMergeRequest;
                             actionType = ActionType.PR;
                             branch = pr.getTarget_branch();
