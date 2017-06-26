@@ -63,7 +63,10 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
             }
             String apiToken = trigger.getApiToken();
             String projectPath = cause.getData().getProjectPath();
-            if (!apiToken.isEmpty() && !projectPath.isEmpty() && build.getResult() != Result.ABORTED) {
+            if (!apiToken.isEmpty()
+                    && !projectPath.isEmpty()
+                    && build.getResult() != Result.ABORTED
+                    && build.getResult() != Result.NOT_BUILT) {
                 addResultNote(
                         apiToken, getBuildUrl(build),
                         cause.getData().getCommitId(),

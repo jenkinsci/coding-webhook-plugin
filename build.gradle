@@ -21,9 +21,9 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5'
 }
 
-group = 'net.coding.jenkins.plugins'
+group = 'net.coding.jenkins.plugin'
 version = '1.0.0-SNAPSHOT'
-description = 'Jenkins plugin for Coding(https://coding.net)'
+description = 'Jenkins plugin for Coding (https://coding.net)'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.14'
