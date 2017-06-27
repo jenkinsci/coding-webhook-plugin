@@ -1,13 +1,13 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form">
-    <f:entry title="${%coding.webhook.token}" field="webHookToken" help="/plugin/coding/help/help-webhook-token.html">
+    <f:entry title="${%coding.webhook.token}" field="webHookToken" help="/plugin/coding-webhook/help/help-webhook-token.html">
         <f:textbox default="" placeholder="${%coding.webhook.token.hint}"/>
     </f:entry>
-    <f:entry title="${%coding.webhook.apitoken}" field="apiToken" help="/plugin/coding/help/help-webhook-apitoken.html">
+    <f:entry title="${%coding.webhook.apitoken}" field="apiToken" help="/plugin/coding-webhook/help/help-webhook-apitoken.html">
         <f:textbox default="" placeholder="${%coding.webhook.apitoken.hint}"/>
     </f:entry>
-    <f:entry title="${%coding.webhook.build.on.mrpr}" field="triggerOnMergeRequest" help="/plugin/coding/help/help-merge-request.html">
+    <f:entry title="${%coding.webhook.build.on.mrpr}" field="triggerOnMergeRequest" help="/plugin/coding-webhook/help/help-merge-request.html">
         <f:checkbox default="true"/>
     </f:entry>
     <f:entry title="${%coding.webhook.build.on.push}" field="triggerOnPush">
@@ -16,17 +16,17 @@
     <f:entry title="${%coding.webhook.build.note}" field="addResultNote">
         <f:checkbox default="false"/>
     </f:entry>
-    <f:entry title="${%coding.webhook.build.ciskip}" field="ciSkip" help="/plugin/coding/help/help-ci-skip.html">
+    <f:entry title="${%coding.webhook.build.ciskip}" field="ciSkip" help="/plugin/coding-webhook/help/help-ci-skip.html">
         <f:checkbox default="true"/>
     </f:entry>
     <f:block>
         <table style="margin-left:10px">
             <f:radioBlock name="branchFilterType" value="All" title="${%coding.webhook.build.branch.all}"
                           checked="${instance.branchFilterType == null || instance.branchFilterType == 'All'}"
-                          inline="true" help="/plugin/coding/help/help-noBranchFiltering.html"/>
+                          inline="true" help="/plugin/coding-webhook/help/help-noBranchFiltering.html"/>
             <f:radioBlock name="branchFilterType" value="NameBasedFilter" title="${%coding.webhook.build.branch.filter.name}"
                           checked="${instance.branchFilterType == 'NameBasedFilter'}" inline="true"
-                          help="/plugin/coding/help/help-allowedBranches.html">
+                          help="/plugin/coding-webhook/help/help-allowedBranches.html">
                 <f:entry title="${%coding.webhook.build.branch.filter.include}">
                     <f:textbox name="includeBranchesSpec" field="includeBranchesSpec" autoCompleteDelimChar=","/>
                 </f:entry>
@@ -37,7 +37,7 @@
 
             <f:radioBlock name="branchFilterType" value="RegexBasedFilter" title="${%coding.webhook.build.branch.filter.regex}"
                           checked="${instance.branchFilterType == 'RegexBasedFilter'}" inline="true"
-                          help="/plugin/coding/help/help-filterBranchesByRegex.html">
+                          help="/plugin/coding-webhook/help/help-filterBranchesByRegex.html">
                 <f:entry title="${%coding.webhook.build.branch.filter.regex.value}">
                     <f:textbox name="targetBranchRegex" field="targetBranchRegex"/>
                 </f:entry>

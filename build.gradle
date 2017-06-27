@@ -31,8 +31,8 @@ task wrapper(type: Wrapper) {
 
 jenkinsPlugin {
     coreVersion = '1.609.3'
-    shortName = 'coding'
-    displayName = 'Jenkins Coding Plugin'
+    shortName = 'coding-webhook'
+    displayName = 'Coding Webhook Plugin'
     disabledTestInjection = true
 
     developers {
