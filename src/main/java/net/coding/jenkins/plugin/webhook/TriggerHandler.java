@@ -161,6 +161,7 @@ public class TriggerHandler {
         data.setActionType(actionType);
         data.setToken(hook.getToken());
         if (hook.getUser() != null) {
+            data.setUserGK(hook.getUser().getGlobal_key());
             data.setUserName(hook.getUser().getName());
             data.setUserUrl(hook.getUser().getWeb_url());
         }

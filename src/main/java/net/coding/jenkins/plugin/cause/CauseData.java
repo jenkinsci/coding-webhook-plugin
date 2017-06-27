@@ -12,6 +12,7 @@ public class CauseData {
     private ActionType actionType;
 
     private String token;
+    private String userGK;
     private String userName;
     private String userUrl;
 
