@@ -41,6 +41,7 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(CodingPushTrigger.class.getName());
 
     private String webHookToken = "";
+    private String apiToken = "";
     private boolean triggerOnPush = true;
     private boolean triggerOnMergeRequest = true;
     private boolean addResultNote = true;
@@ -49,19 +50,19 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private String includeBranchesSpec;
     private String excludeBranchesSpec;
     private String targetBranchRegex;
-    private String apiToken = "";
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     private transient TriggerHandler triggerHandler;
 
     @DataBoundConstructor
-    public CodingPushTrigger(String webHookToken, boolean triggerOnPush,
+    public CodingPushTrigger(String webHookToken, String apiToken, boolean triggerOnPush,
                              boolean triggerOnMergeRequest, boolean addResultNote, boolean ciSkip,
                              BranchFilterType branchFilterType, String includeBranchesSpec,
                              String excludeBranchesSpec, String targetBranchRegex)
     {
         this.webHookToken = webHookToken;
+        this.apiToken = apiToken;
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
         this.addResultNote = addResultNote;

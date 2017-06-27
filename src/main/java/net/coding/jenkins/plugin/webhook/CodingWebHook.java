@@ -42,8 +42,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 @Extension
 public class CodingWebHook implements UnprotectedRootAction {
-    public static final String WEBHOOK_URL = "coding";
     private static final Logger LOGGER = Logger.getLogger(CodingWebHook.class.getName());
+
+    public static final String WEBHOOK_URL = "coding";
+    public static final String API_TOKEN_PARAM = "private_token";
 
     @Override
     public String getIconFileName() {

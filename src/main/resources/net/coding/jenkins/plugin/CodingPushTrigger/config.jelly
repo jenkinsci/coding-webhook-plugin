@@ -2,7 +2,10 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form">
     <f:entry title="${%coding.webhook.token}" field="webHookToken" help="/plugin/coding/help/help-webhook-token.html">
-        <f:textbox default=""/>
+        <f:textbox default="" placeholder="${%coding.webhook.token.hint}"/>
+    </f:entry>
+    <f:entry title="${%coding.webhook.apitoken}" field="apiToken" help="/plugin/coding/help/help-webhook-apitoken.html">
+        <f:textbox default="" placeholder="${%coding.webhook.apitoken.hint}"/>
     </f:entry>
     <f:entry title="${%coding.webhook.build.on.mrpr}" field="triggerOnMergeRequest" help="/plugin/coding/help/help-merge-request.html">
         <f:checkbox default="true"/>
@@ -11,7 +14,7 @@
         <f:checkbox default="true"/>
     </f:entry>
     <f:entry title="${%coding.webhook.build.note}" field="addResultNote">
-        <f:checkbox default="true"/>
+        <f:checkbox default="false"/>
     </f:entry>
     <f:entry title="${%coding.webhook.build.ciskip}" field="ciSkip" help="/plugin/coding/help/help-ci-skip.html">
         <f:checkbox default="true"/>
