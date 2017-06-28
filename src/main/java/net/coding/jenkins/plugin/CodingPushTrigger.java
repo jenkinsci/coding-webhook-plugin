@@ -35,7 +35,7 @@ import lombok.Setter;
 /**
  * @author tsl0922
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @Data
 public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(CodingPushTrigger.class.getName());

@@ -15,7 +15,7 @@ dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:git:2.4.1@jar'
     jenkinsPlugins 'org.jenkins-ci.plugins:git-client:1.19.0@jar'
 
-    compile 'org.projectlombok:lombok:1.16.8'
+    compileOnly 'org.projectlombok:lombok:1.16.8'
     compile 'com.google.code.gson:gson:2.6.1'
     compile 'org.eclipse.jgit:org.eclipse.jgit:3.5.2.201411120430-r'
     compile 'org.apache.httpcomponents:httpclient:4.5'
