@@ -1,4 +1,4 @@
-# Jenkins Coding Builder Plugin
+# Jenkins Coding Webhook Plugin
 
 This plugin integrates [Coding][1] with Jenkins. It handles [WebHook][2] request and triggers
 builds for pushes and merge/pull requests.

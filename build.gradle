@@ -22,7 +22,7 @@ dependencies {
 }
 
 group = 'net.coding.jenkins.plugin'
-version = '1.0.0-SNAPSHOT'
+version = '1.0.0'
 description = 'Jenkins plugin for Coding (https://coding.net)'
 
 task wrapper(type: Wrapper) {
