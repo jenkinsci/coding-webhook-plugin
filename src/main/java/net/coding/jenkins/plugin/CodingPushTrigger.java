@@ -102,7 +102,7 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
         CodingPushTrigger trigger = null;
         if (job instanceof ParameterizedJobMixIn.ParameterizedJob) {
             ParameterizedJobMixIn.ParameterizedJob p = (ParameterizedJobMixIn.ParameterizedJob) job;
-            for (Trigger t : p.getTriggers().values()) {
+            for (Object t : p.getTriggers().values()) {
                 if (t instanceof CodingPushTrigger) {
                     trigger = (CodingPushTrigger) t;
                 }
