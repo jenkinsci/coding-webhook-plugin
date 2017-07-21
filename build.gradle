@@ -22,16 +22,15 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5'
 }
 
-group = 'net.coding.jenkins.plugin'
-version = '1.0.0'
-description = 'Jenkins plugin for Coding (https://coding.net)'
+group = 'org.jenkins-ci.plugins'
+description = 'Webhook trigger for Coding (https://coding.net)'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.14'
 }
 
 jenkinsPlugin {
-    coreVersion = '1.609.3'
+    coreVersion = '1.625.3'
     shortName = 'coding-webhook'
     displayName = 'Coding Webhook Plugin'
     disabledTestInjection = true
