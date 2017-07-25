@@ -33,6 +33,8 @@ jenkinsPlugin {
     coreVersion = '1.625.3'
     shortName = 'coding-webhook'
     displayName = 'Coding Webhook Plugin'
+    url = 'https://wiki.jenkins.io/display/JENKINS/Coding+Webhook+Plugin'
+    gitHubUrl = 'https://github.com/jenkinsci/coding-webhook-plugin'
     disabledTestInjection = true
 
     developers {
