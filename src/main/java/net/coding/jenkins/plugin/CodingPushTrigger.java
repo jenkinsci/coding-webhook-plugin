@@ -40,12 +40,13 @@ import lombok.Setter;
 public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(CodingPushTrigger.class.getName());
 
-    private String webHookToken = "";
-    private String apiToken = "";
-    private boolean triggerOnPush = true;
-    private boolean triggerOnMergeRequest = true;
-    private boolean addResultNote = true;
-    private boolean ciSkip = true;
+    private String webHookToken;
+    private String apiToken;
+    private boolean triggerOnPush;
+    private boolean triggerOnMergeRequest;
+    private String mergeRequestTriggerAction;
+    private boolean addResultNote;
+    private boolean ciSkip;
     private BranchFilterType branchFilterType;
     private String includeBranchesSpec;
     private String excludeBranchesSpec;
@@ -56,15 +57,16 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private transient TriggerHandler triggerHandler;
 
     @DataBoundConstructor
-    public CodingPushTrigger(String webHookToken, String apiToken, boolean triggerOnPush,
-                             boolean triggerOnMergeRequest, boolean addResultNote, boolean ciSkip,
+    public CodingPushTrigger(String webHookToken, String apiToken,
+                             boolean triggerOnMergeRequest, String mergeRequestTriggerAction,
+                             boolean triggerOnPush, boolean addResultNote, boolean ciSkip,
                              BranchFilterType branchFilterType, String includeBranchesSpec,
-                             String excludeBranchesSpec, String targetBranchRegex)
-    {
+                             String excludeBranchesSpec, String targetBranchRegex) {
         this.webHookToken = webHookToken;
         this.apiToken = apiToken;
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
+        this.mergeRequestTriggerAction = mergeRequestTriggerAction;
         this.addResultNote = addResultNote;
         this.ciSkip = ciSkip;
         this.branchFilterType = branchFilterType;
@@ -79,7 +81,7 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
         BranchFilterConfig branchFilterConfig = new BranchFilterConfig(
                 branchFilterType, includeBranchesSpec, excludeBranchesSpec, targetBranchRegex);
         this.triggerHandler = new TriggerHandler(
-                this.triggerOnPush, this.triggerOnMergeRequest,
+                this.triggerOnPush, this.triggerOnMergeRequest, mergeRequestTriggerAction,
                 BranchFilterFactory.newBranchFilter(branchFilterConfig)
         );
     }

@@ -43,11 +43,13 @@ public class TriggerHandler {
 
     private boolean triggerOnPush;
     private boolean triggerOnMergeRequest;
+    private String mergeRequestTriggerAction;
     private BranchFilter branchFilter;
 
-    public TriggerHandler(boolean triggerOnPush, boolean triggerOnMergeRequest, BranchFilter branchFilter) {
+    public TriggerHandler(boolean triggerOnPush, boolean triggerOnMergeRequest, String mergeRequestTriggerAction, BranchFilter branchFilter) {
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
+        this.mergeRequestTriggerAction = mergeRequestTriggerAction;
         this.branchFilter = branchFilter;
     }
 
@@ -69,19 +71,25 @@ public class TriggerHandler {
                         break;
                     case MERGE_REQUEST_EVENT:
                         MergeRequest mr = hook.getMerge_request();
-                        if (mr.isCreate() || mr.isPush()) {
-                            shouldTrigger = triggerOnMergeRequest;
-                            actionType = ActionType.MR;
-                            branch = mr.getTarget_branch();
+                        if (!isTriggerAction(mr.getAction())) {
+                            LOGGER.log(Level.INFO, "Skipping action: {0}, MR #{1} {2}",
+                                    new Object[]{mr.getAction(), mr.getNumber(), mr.getTitle()});
+                            return;
                         }
+                        shouldTrigger = triggerOnMergeRequest;
+                        actionType = ActionType.MR;
+                        branch = mr.getTarget_branch();
                         break;
                     case PULL_REQUEST_EVENT:
                         PullRequest pr = hook.getPull_request();
-                        if (pr.isCreate() || pr.isPush()) {
-                            shouldTrigger = triggerOnMergeRequest;
-                            actionType = ActionType.PR;
-                            branch = pr.getTarget_branch();
+                        if (!isTriggerAction(pr.getAction())) {
+                            LOGGER.log(Level.INFO, "Skipping action: {0}, PR #{1} {2}",
+                                    new Object[]{pr.getAction(), pr.getNumber(), pr.getTitle()});
+                            return;
                         }
+                        shouldTrigger = triggerOnMergeRequest;
+                        actionType = ActionType.PR;
+                        branch = pr.getTarget_branch();
                         break;
                     default:
                         break;
@@ -229,6 +237,10 @@ public class TriggerHandler {
             LOGGER.log(Level.WARNING, "could not parse URL");
         }
         return null;
+    }
+
+    private boolean isTriggerAction(String action) {
+        return StringUtils.isEmpty(mergeRequestTriggerAction) || StringUtils.contains(mergeRequestTriggerAction, action);
     }
 
     private boolean isNewBranchPush(WebHook hook) {
