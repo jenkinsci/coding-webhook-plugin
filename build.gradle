@@ -24,7 +24,7 @@ dependencies {
 
 group = 'org.jenkins-ci.plugins'
 description = 'Webhook trigger for Coding (https://coding.net)'
-version = '1.0.0'
+version = '1.0.1'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.14'
