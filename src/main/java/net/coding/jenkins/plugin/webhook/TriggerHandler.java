@@ -143,8 +143,10 @@ public class TriggerHandler {
         String revision = null;
         switch (actionType) {
             case PUSH:
-                if ((hook.getCommits() == null || hook.getCommits().isEmpty()) && isNewBranchPush(hook)) {
-                    revision = hook.getAfter();
+                if ((hook.getCommits() == null || hook.getCommits().isEmpty())) {
+                    if (isNewBranchPush(hook)) {
+                        revision = hook.getAfter();
+                    }
                 } else {
                     List<Commit> commits = hook.getCommits();
                     revision = commits.get(commits.size() - 1).getSha();
