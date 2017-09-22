@@ -3,6 +3,14 @@
 This plugin integrates [Coding][1] with Jenkins. It handles [WebHook][2] request and triggers
 builds for pushes and merge/pull requests.
 
+## Installation
+
+This plugin has been published to the official [Plugins Index][4], follow the [Managing Plugins][5]
+document to install it.
+
+## Usage
+
+See <https://open.coding.net/ci/jenkins> (Chinese)
 
 ## Development
 
@@ -19,5 +27,7 @@ You may want to disable debug options to get faster page load time:
 This project is started and based on the [gitlab-plugin][3], thanks for the great project.
 
   [1]: https://coding.net
-  [2]: https://coding.net/help/doc/git/webhook.html
+  [2]: https://open.coding.net/webhooks
   [3]: https://github.com/jenkinsci/gitlab-plugin
+  [4]: https://plugins.jenkins.io
+  [5]: https://jenkins.io/doc/book/managing/plugins
