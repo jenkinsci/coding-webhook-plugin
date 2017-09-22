@@ -96,6 +96,9 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     }
 
     private void initializeTriggerHandler() {
+        if (this.branchFilterType == null) {
+            this.branchFilterType = BranchFilterType.All;
+        }
         BranchFilterConfig branchFilterConfig = new BranchFilterConfig(
                 branchFilterType, includeBranchesSpec, excludeBranchesSpec, targetBranchRegex);
         this.triggerHandler = new TriggerHandler(
