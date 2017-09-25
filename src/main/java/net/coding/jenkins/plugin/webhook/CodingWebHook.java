@@ -112,6 +112,8 @@ public class CodingWebHook implements UnprotectedRootAction {
                 });
                 throw hudson.util.HttpResponses.ok();
             case "GET":
+                throw hudson.util.HttpResponses.errorWithoutStack(400, "This url is not intend" +
+                        " to be visited by human, please test it on your webhook settings page.");
             default:
                 LOGGER.log(Level.FINE, "Unsupported HTTP method: {0}", method);
                 break;
