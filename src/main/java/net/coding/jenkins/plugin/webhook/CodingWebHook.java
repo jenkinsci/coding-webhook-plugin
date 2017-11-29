@@ -95,11 +95,11 @@ public class CodingWebHook implements UnprotectedRootAction {
                 String eventHeader = request.getHeader("X-Coding-Event");
                 if (eventHeader == null) {
                     LOGGER.log(Level.INFO, "Missing X-Coding-Event header");
-                    return;
+                    throw hudson.util.HttpResponses.status(HttpServletResponse.SC_BAD_REQUEST);
                 }
                 if (StringUtils.equals(eventHeader, "ping")) {
                     LOGGER.log(Level.INFO, "Received coding webHook ping: {0}", getRequestBody(request));
-                    return;
+                    throw hudson.util.HttpResponses.ok();
                 }
                 String json = getRequestBody(request);
                 LOGGER.log(Level.INFO, "WebHook payload: {0}", json);
