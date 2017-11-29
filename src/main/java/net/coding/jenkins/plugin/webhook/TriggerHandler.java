@@ -28,6 +28,7 @@ import net.coding.jenkins.plugin.model.WebHook;
 import net.coding.jenkins.plugin.webhook.filter.BranchFilter;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.URIish;
 
 import java.net.URISyntaxException;
@@ -55,8 +56,6 @@ public class TriggerHandler {
     private static final String PUSH_EVENT = "push";
     private static final String PULL_REQUEST_EVENT = "pull_request";
     private static final String MERGE_REQUEST_EVENT = "merge_request";
-
-    private static final String NO_COMMIT = "0000000000000000000000000000000000000000";
     private static final String CI_SKIP = "[ci-skip]";
 
     private boolean triggerOnPush;
@@ -161,14 +160,7 @@ public class TriggerHandler {
         String revision = null;
         switch (actionType) {
             case PUSH:
-                if ((hook.getCommits() == null || hook.getCommits().isEmpty())) {
-                    if (isNewBranchPush(hook)) {
-                        revision = hook.getAfter();
-                    }
-                } else {
-                    List<Commit> commits = hook.getCommits();
-                    revision = commits.get(commits.size() - 1).getSha();
-                }
+                revision = hook.getAfter();
                 break;
             case MR:
                 revision = hook.getMerge_request().getMerge_commit_sha();
@@ -263,12 +255,8 @@ public class TriggerHandler {
         return StringUtils.isEmpty(mergeRequestTriggerAction) || StringUtils.contains(mergeRequestTriggerAction, action);
     }
 
-    private boolean isNewBranchPush(WebHook hook) {
-        return hook.getBefore() != null && hook.getBefore().equals(NO_COMMIT);
-    }
-
     private boolean isNoRemoveBranchPush(WebHook hook) {
-        return hook.getAfter() != null && !hook.getAfter().equals(NO_COMMIT);
+        return hook.getAfter() != null && !hook.getAfter().equals(ObjectId.zeroId().name());
     }
 
     private boolean isCiSkip(WebHook hook, ActionType actionType) {
