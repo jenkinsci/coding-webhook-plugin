@@ -6,6 +6,9 @@
             <f:entry title="${%coding.webhook.token}" field="webHookToken" help="/plugin/coding-webhook/help/help-webhook-token.html">
                 <f:textbox default="" placeholder="${%coding.webhook.token.hint}"/>
             </f:entry>
+            <f:entry title="${%coding.webhook.api.personal.token}" field="personalToken" help="/plugin/coding-webhook/help/help-webhook-api-personal-token.html">
+                <f:textbox default="" placeholder="${%coding.webhook.api.personal.token.hint}"/>
+            </f:entry>
             <f:entry title="${%coding.webhook.apitoken}" field="apiToken" help="/plugin/coding-webhook/help/help-webhook-apitoken.html">
                 <f:textbox default="" placeholder="${%coding.webhook.apitoken.hint}"/>
             </f:entry>

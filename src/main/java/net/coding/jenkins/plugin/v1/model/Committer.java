@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.coding.jenkins.plugin.model;
+package net.coding.jenkins.plugin.v1.model;
 
 import lombok.Data;
 

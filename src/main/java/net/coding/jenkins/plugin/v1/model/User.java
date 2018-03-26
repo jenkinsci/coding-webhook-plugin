@@ -17,26 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.coding.jenkins.plugin.model;
+package net.coding.jenkins.plugin.v1.model;
 
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.List;
-
+/**
+ * @author tsl0922
+ */
 @Data
-public class Commit implements Serializable {
-
-    private static final long serialVersionUID = -1811302245094462653L;
-
-    private String id;
-    private String tree_id;
-    private boolean distinct;
-    private String message;
-    private String url;
-    private PersonIdent author;
-    private PersonIdent committer;
-    private List<String> added;
-    private List<String> removed;
-    private List<String> modified;
+public class User {
+    private String name;
+    private String global_key;
+    private String path;
+    private String avatar;
+    private String web_url;
 }

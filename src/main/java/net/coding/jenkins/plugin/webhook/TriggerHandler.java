@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +19,13 @@
  */
 package net.coding.jenkins.plugin.webhook;
 
+import net.coding.jenkins.plugin.bean.WebHookTask;
 import net.coding.jenkins.plugin.cause.CauseData;
 import net.coding.jenkins.plugin.cause.CodingWebHookCause;
 import net.coding.jenkins.plugin.model.Commit;
 import net.coding.jenkins.plugin.model.MergeRequest;
-import net.coding.jenkins.plugin.model.PullRequest;
-import net.coding.jenkins.plugin.model.WebHook;
+import net.coding.jenkins.plugin.model.Ref;
+import net.coding.jenkins.plugin.model.event.Push;
 import net.coding.jenkins.plugin.webhook.filter.BranchFilter;
 
 import org.apache.commons.lang.StringUtils;
@@ -51,9 +53,6 @@ import static org.eclipse.jgit.lib.Repository.shortenRefName;
 public class TriggerHandler {
     private final static Logger LOGGER = Logger.getLogger(TriggerHandler.class.getName());
 
-    private static final String PUSH_EVENT = "push";
-    private static final String PULL_REQUEST_EVENT = "pull_request";
-    private static final String MERGE_REQUEST_EVENT = "merge_request";
     private static final String CI_SKIP = "[ci-skip]";
 
     private boolean triggerOnPush;
@@ -68,39 +67,31 @@ public class TriggerHandler {
         this.branchFilter = branchFilter;
     }
 
-    public void handle(Job<?, ?> job, WebHook hook, String event, boolean ciSkip) {
+    public void handle(Job<?, ?> job, WebHookTask task, boolean ciSkip) {
         boolean shouldTrigger = false;
         ActionType actionType = null;
         String branch = null;
+        String event = task.getEvent();
+        LOGGER.log(Level.FINEST, "handle web_hook for event: {0}", event);
         switch (event) {
-            case PUSH_EVENT:
-                if (isNoRemoveBranchPush(hook)) {
+            case WebHookTask.EVENT_PUSH:
+                if (isNoRemoveBranchPush(task)) {
                     shouldTrigger = triggerOnPush;
                     actionType = ActionType.PUSH;
-                    branch = shortenRef(hook.getRef());
+                    branch = shortenRef(task.getPush().getRef());
                 }
                 break;
-            case MERGE_REQUEST_EVENT:
-                MergeRequest mr = hook.getMerge_request();
-                if (!isTriggerAction(mr.getAction())) {
+            case WebHookTask.EVENT_MERGE_REQUEST:
+                net.coding.jenkins.plugin.model.event.MergeRequest mrEvent = task.getMergeRequest();
+                MergeRequest mergeRequest = mrEvent.getMergeRequest();
+                if (!isTriggerAction(mrEvent.getAction())) {
                     LOGGER.log(Level.INFO, "Skipping action: {0}, MR #{1} {2}",
-                            new Object[]{mr.getAction(), mr.getNumber(), mr.getTitle()});
+                            new Object[]{mrEvent.getAction(), mergeRequest.getNumber(), mergeRequest.getTitle()});
                     return;
                 }
                 shouldTrigger = triggerOnMergeRequest;
                 actionType = ActionType.MR;
-                branch = mr.getTarget_branch();
-                break;
-            case PULL_REQUEST_EVENT:
-                PullRequest pr = hook.getPull_request();
-                if (!isTriggerAction(pr.getAction())) {
-                    LOGGER.log(Level.INFO, "Skipping action: {0}, PR #{1} {2}",
-                            new Object[]{pr.getAction(), pr.getNumber(), pr.getTitle()});
-                    return;
-                }
-                shouldTrigger = triggerOnMergeRequest;
-                actionType = ActionType.PR;
-                branch = pr.getTarget_branch();
+                branch = mergeRequest.getBase().getRef();
                 break;
             default:
                 break;
@@ -108,7 +99,7 @@ public class TriggerHandler {
         if (actionType == null) {
             return;
         }
-        if (ciSkip && isCiSkip(hook, actionType)) {
+        if (ciSkip && isCiSkip(task, actionType)) {
             LOGGER.log(Level.INFO, "Skipping due to ci-skip.");
             return;
         }
@@ -117,7 +108,8 @@ public class TriggerHandler {
             return;
         }
         if (shouldTrigger) {
-            scheduleBuild(job, createActions(job, hook, actionType));
+            LOGGER.log(Level.FINEST, "Schedule to build for branch: {0}", branch);
+            scheduleBuild(job, createActions(job, task, actionType));
         }
     }
 
@@ -132,33 +124,32 @@ public class TriggerHandler {
         asParameterizedJobMixIn(job).scheduleBuild2(projectBuildDelay, actions);
     }
 
-    private Action[] createActions(Job<?, ?> job, WebHook hook, ActionType actionType) {
+    private Action[] createActions(Job<?, ?> job, WebHookTask task, ActionType actionType) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new CauseAction(new CodingWebHookCause(buildCauseData(hook, actionType))));
+        actions.add(new CauseAction(new CodingWebHookCause(buildCauseData(task, actionType))));
         try {
-            actions.add(createRevisionParameter(hook, actionType));
+            actions.add(createRevisionParameter(task, actionType));
         } catch (IllegalStateException e) {
             LOGGER.log(Level.WARNING, "Unable to build for req {0} for job {1}: {2}",
-                    new Object[]{hook, (job != null ? job.getFullName() : null), e.getMessage()});
+                    new Object[]{task, (job != null ? job.getFullName() : null), e.getMessage()});
         }
         return actions.toArray(new Action[actions.size()]);
     }
 
-    private RevisionParameterAction createRevisionParameter(WebHook hook, ActionType actionType) {
-        return new RevisionParameterAction(retrieveRevisionToBuild(hook, actionType), createUrIish(hook));
+    private RevisionParameterAction createRevisionParameter(WebHookTask task, ActionType actionType) {
+        return new RevisionParameterAction(retrieveRevisionToBuild(task, actionType), createUrIish(task));
     }
 
-    private String retrieveRevisionToBuild(WebHook hook, ActionType actionType) {
+    private String retrieveRevisionToBuild(WebHookTask task, ActionType actionType) {
         String revision = null;
         switch (actionType) {
             case PUSH:
-                revision = hook.getAfter();
-                break;
-            case MR:
-                revision = hook.getMerge_request().getMerge_commit_sha();
+                revision = task.getPush().getAfter();
                 break;
             case PR:
-                revision = hook.getPull_request().getMerge_commit_sha();
+            case MR:
+                revision = task.getMergeRequest().getMergeRequest().getMerge_commit_sha();
+                break;
             default:
                 break;
         }
@@ -168,53 +159,50 @@ public class TriggerHandler {
         return revision;
     }
 
-    private CauseData buildCauseData(WebHook hook, ActionType actionType) {
+    private CauseData buildCauseData(WebHookTask task, ActionType actionType) {
+
         CauseData data = new CauseData();
         data.setActionType(actionType);
-        data.setToken(hook.getToken());
-        if (hook.getUser() != null) {
-            data.setUserGK(hook.getUser().getGlobal_key());
-            data.setUserName(hook.getUser().getName());
-            data.setUserUrl(hook.getUser().getWeb_url());
+        data.setToken(task.getSignature());
+        if (task.getSender() != null) {
+            data.setUserGK(task.getSender().getLogin());
+            data.setUserName(task.getSender().getName());
+            data.setUserUrl(task.getSender().getHtml_url());
         }
-        data.setRef(hook.getRef());
-        data.setBefore(hook.getBefore());
-        data.setAfter(hook.getAfter());
-        data.setCommitId(hook.getAfter());
-        data.setRepoUrl(hook.getRepository().getSsh_url());
-        data.setProjectPath(hook.getRepository().projectPath());
-        if (hook.getMerge_request() != null) {
-            MergeRequest mr = hook.getMerge_request();
-            data.setMergeRequestId(mr.getId());
-            data.setCommitId(mr.getMerge_commit_sha());
-            data.setMergeRequestIid(mr.getNumber());
-            data.setMergeRequestTitle(mr.getTitle());
-            data.setMergeRequestBody(mr.getBody());
-            data.setMergeRequestUrl(mr.getWeb_url());
-            data.setSourceBranch(shortenRef(mr.getSource_branch()));
-            data.setTargetBranch(shortenRef(mr.getTarget_branch()));
-            if (mr.getUser() != null) {
-                data.setUserName(mr.getUser().getName());
-                data.setUserUrl(mr.getUser().getWeb_url());
-            }
-        }
-        if (hook.getPull_request() != null) {
-            PullRequest pr = hook.getPull_request();
-            data.setMergeRequestId(pr.getId());
-            data.setCommitId(pr.getMerge_commit_sha());
-            data.setMergeRequestIid(pr.getNumber());
-            data.setMergeRequestTitle(pr.getTitle());
-            data.setMergeRequestBody(pr.getBody());
-            data.setMergeRequestUrl(pr.getWeb_url());
-            data.setSourceProjectPath(pr.getSource_repository().projectPath());
-            data.setSourceBranch(shortenRef(pr.getSource_branch()));
-            data.setSourceRepoUrl(pr.getSource_repository().getSsh_url());
-            data.setSourceUser(pr.getSource_repository().getOwner().getGlobal_key());
-            data.setTargetBranch(shortenRef(pr.getTarget_branch()));
-            if (pr.getUser() != null) {
-                data.setUserName(pr.getUser().getName());
-                data.setUserUrl(pr.getUser().getWeb_url());
-            }
+        data.setRepoUrl(task.getRepository().getSsh_url());
+        data.setProjectHtmlUrl(task.getRepository().getHtml_url());
+        data.setRepoUrl(task.getRepository().getSsh_url());
+
+        switch (actionType) {
+            case PUSH:
+                Push push = task.getPush();
+                data.setRef(push.getRef());
+                data.setBefore(push.getBefore());
+                data.setAfter(push.getAfter());
+                data.setCommitId(push.getAfter());
+                break;
+            case MR:
+                MergeRequest mr = task.getMergeRequest().getMergeRequest();
+                data.setMergeRequestId(mr.getId());
+                data.setCommitId(mr.getMerge_commit_sha());
+                data.setMergeRequestIid(mr.getNumber());
+                data.setMergeRequestTitle(mr.getTitle());
+                data.setMergeRequestBody(mr.getBody());
+                data.setMergeRequestUrl(mr.getHtml_url());
+                data.setSourceBranch(shortenRef(mr.getHead().getRef()));
+                data.setTargetBranch(shortenRef(mr.getBase().getRef()));
+                if (mr.getUser() != null) {
+                    data.setUserName(mr.getUser().getName());
+                    data.setUserUrl(mr.getUser().getHtml_url());
+                }
+            case PR:
+                mr = task.getMergeRequest().getMergeRequest();
+                Ref head = mr.getHead();
+                data.setSourceProjectPath(head.getRepo().getFull_name());
+                data.setSourceRepoUrl(head.getRepo().getSsh_url());
+                data.setSourceUser(head.getRepo().getOwner().getLogin());
+            default:
+                break;
         }
         return data;
     }
@@ -232,10 +220,10 @@ public class TriggerHandler {
         };
     }
 
-    private URIish createUrIish(WebHook hook) {
+    private URIish createUrIish(WebHookTask task) {
         try {
-            if (hook.getRepository() != null) {
-                return new URIish(hook.getRepository().getSsh_url());
+            if (task.getRepository() != null) {
+                return new URIish(task.getRepository().getSsh_url());
             }
         } catch (URISyntaxException e) {
             LOGGER.log(Level.WARNING, "could not parse URL");
@@ -247,24 +235,23 @@ public class TriggerHandler {
         return StringUtils.isEmpty(mergeRequestTriggerAction) || StringUtils.contains(mergeRequestTriggerAction, action);
     }
 
-    private boolean isNoRemoveBranchPush(WebHook hook) {
-        return hook.getAfter() != null && !hook.getAfter().equals(ObjectId.zeroId().name());
+    private boolean isNoRemoveBranchPush(WebHookTask task) {
+        return task.getPush().getAfter() != null
+                && !task.getPush().getAfter().equals(ObjectId.zeroId().name());
     }
 
-    private boolean isCiSkip(WebHook hook, ActionType actionType) {
+    private boolean isCiSkip(WebHookTask task, ActionType actionType) {
         switch (actionType) {
             case PUSH:
-                List<Commit> commits = hook.getCommits();
+                List<Commit> commits = task.getPush().getCommits();
                 return commits != null &&
                         !commits.isEmpty() &&
-                        commits.get(commits.size() - 1).getShort_message() != null &&
-                        StringUtils.containsIgnoreCase(commits.get(commits.size() - 1).getShort_message(), CI_SKIP);
+                        commits.get(commits.size() - 1).getMessage() != null &&
+                        StringUtils.containsIgnoreCase(commits.get(commits.size() - 1).getMessage(), CI_SKIP);
             case MR:
-                MergeRequest mr = hook.getMerge_request();
-                return StringUtils.containsIgnoreCase(mr.getTitle(), CI_SKIP);
             case PR:
-                PullRequest pr = hook.getPull_request();
-                return StringUtils.containsIgnoreCase(pr.getTitle(), CI_SKIP);
+                net.coding.jenkins.plugin.model.event.MergeRequest mrEvent = task.getMergeRequest();
+                return StringUtils.containsIgnoreCase(mrEvent.getMergeRequest().getTitle(), CI_SKIP);
             default:
                 return false;
         }

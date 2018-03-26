@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,23 +19,18 @@
  */
 package net.coding.jenkins.plugin.model;
 
-import java.util.List;
-
 import lombok.Data;
 
-/**
- * @author tsl0922
- */
+import java.io.Serializable;
+
 @Data
-public class WebHook {
+public class Ref implements Serializable {
+
+    private static final long serialVersionUID = -4853752378517375885L;
+
+    private String label;
     private String ref;
-    private List<Commit> commits;
-    private String before;
-    private String after;
-    private Repository repository;
-    private String event;
-    private String token;
-    private MergeRequest merge_request;
-    private PullRequest pull_request;
+    private String sha;
     private User user;
+    private Repository repo;
 }

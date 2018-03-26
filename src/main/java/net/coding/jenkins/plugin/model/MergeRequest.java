@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +21,32 @@ package net.coding.jenkins.plugin.model;
 
 import lombok.Data;
 
-/**
- * @author tsl0922
- */
+import java.io.Serializable;
+
 @Data
-public class MergeRequest {
-    private Integer id;
+public class MergeRequest implements Serializable {
+
+    private static final long serialVersionUID = -8632601797141226063L;
+
+    private long id;
+    private String url;
+    private String html_url;
+    private String patch_url;
+    private String diff_url;
+    private long number;
+    private String state;
     private String title;
     private String body;
-    private String merge_commit_sha;
-    private String status;
-    private String action;
-    private Integer number;
-    private String target_branch;
-    private String source_branch;
-    private String web_url;
     private User user;
+    private String merge_commit_sha;
+
+    private Ref head;
+    private Ref base;
+    private boolean merged;
+    private User merged_by;
+    private int comments;
+    private int commits;
+    private int additions;
+    private int deletions;
+    private int changed_files;
 }

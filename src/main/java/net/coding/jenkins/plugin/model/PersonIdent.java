@@ -22,21 +22,13 @@ package net.coding.jenkins.plugin.model;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 @Data
-public class Commit implements Serializable {
+public class PersonIdent implements Serializable {
 
-    private static final long serialVersionUID = -1811302245094462653L;
+    private static final long serialVersionUID = 4646040930652004500L;
 
-    private String id;
-    private String tree_id;
-    private boolean distinct;
-    private String message;
-    private String url;
-    private PersonIdent author;
-    private PersonIdent committer;
-    private List<String> added;
-    private List<String> removed;
-    private List<String> modified;
+    private String name;
+    private String email;
+    private String username;
 }

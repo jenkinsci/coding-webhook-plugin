@@ -17,26 +17,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.coding.jenkins.plugin.model;
+package net.coding.jenkins.plugin.v1.model;
 
-import lombok.Data;
+import org.junit.Test;
 
-import java.io.Serializable;
-import java.util.List;
+import static org.junit.Assert.*;
 
-@Data
-public class Commit implements Serializable {
-
-    private static final long serialVersionUID = -1811302245094462653L;
-
-    private String id;
-    private String tree_id;
-    private boolean distinct;
-    private String message;
-    private String url;
-    private PersonIdent author;
-    private PersonIdent committer;
-    private List<String> added;
-    private List<String> removed;
-    private List<String> modified;
+public class RepositoryTest {
+    @Test
+    public void projectApiUrl() throws Exception {
+        Repository repository = new Repository();
+        repository.setWeb_url("https://codingcorp.coding.net/p/Demo");
+        assertEquals("https://codingcorp.coding.net/api/user/codingcorp/project/Demo", repository.projectApiUrl());
+        repository.setWeb_url("https://coding.net/u/wusisu/p/screeps");
+        assertEquals("https://coding.net/api/user/wusisu/project/screeps", repository.projectApiUrl());
+    }
 }

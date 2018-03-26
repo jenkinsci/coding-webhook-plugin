@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,31 +19,27 @@
  */
 package net.coding.jenkins.plugin.model;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
-/**
- * @author tsl0922
- */
-@Data
-public class Repository {
-    private String project_id;
-    private String ssh_url;
-    private String https_url;
-    private String git_url;
-    private String name;
-    private String description;
-    private String web_url;
-    private User owner;
+import java.io.Serializable;
 
-    public String projectPath() {
-        Pattern pattern = Pattern.compile("https?://[^/]+/(?:u|t)/([^/]+)/p/([^/]+).*");
-        Matcher matcher = pattern.matcher(web_url);
-        if (matcher.matches()) {
-            return String.format("%s/%s", matcher.group(1), matcher.group(2));
-        }
-        return "";
-    }
+@Data
+public class Repository implements Serializable {
+
+    private static final long serialVersionUID = -4958159118706816396L;
+
+    private int id;
+    private String name;
+    private String full_name;
+    private User owner;
+    @SerializedName("private")
+    private boolean is_private;
+    private String html_url;
+    private String description;
+    private boolean fork;
+    private String url;
+    private String clone_url;
+    private String ssh_url;
+    private String default_branch;
 }

@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,15 +35,16 @@ public class CauseData {
     private String userName;
     private String userUrl;
 
-    private String projectPath;
+//    private String projectApiUrl;
+    private String projectHtmlUrl;
     private String ref;
     private String before;
     private String after;
     private String repoUrl;
     private String commitId;
 
-    private Integer mergeRequestId;
-    private Integer mergeRequestIid;
+    private Long mergeRequestId;
+    private Long mergeRequestIid;
     private String mergeRequestTitle;
     private String mergeRequestUrl;
     private String mergeRequestBody;

@@ -17,26 +17,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.coding.jenkins.plugin.model;
+package net.coding.jenkins.plugin.webhook;
 
-import lombok.Data;
+import net.coding.jenkins.plugin.bean.WebHookTask;
 
-import java.io.Serializable;
-import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 
-@Data
-public class Commit implements Serializable {
+public interface IWebHookHelper {
 
-    private static final long serialVersionUID = -1811302245094462653L;
+    WebHookTask parseTaskFromRequest(final HttpServletRequest request);
 
-    private String id;
-    private String tree_id;
-    private boolean distinct;
-    private String message;
-    private String url;
-    private PersonIdent author;
-    private PersonIdent committer;
-    private List<String> added;
-    private List<String> removed;
-    private List<String> modified;
+    boolean isSignatureValid(WebHookTask task, String webHookToken);
+
+    String parseEventHeader(String eventHeader);
 }

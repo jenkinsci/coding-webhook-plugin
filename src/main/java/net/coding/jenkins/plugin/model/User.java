@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +21,21 @@ package net.coding.jenkins.plugin.model;
 
 import lombok.Data;
 
-/**
- * @author tsl0922
- */
+import java.io.Serializable;
+
 @Data
-public class User {
+public class User implements Serializable {
+
+    private static final long serialVersionUID = -9183217379960904944L;
+
+    private int id;
+    private String login;
+    private String avatar_url;
+
+    private String url;
+    private String html_url;
+
     private String name;
-    private String global_key;
-    private String path;
-    private String avatar;
-    private String web_url;
+    private String name_pinyin;
+
 }
