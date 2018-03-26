@@ -25,18 +25,24 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class Commit implements Serializable {
+public class Hook implements Serializable {
 
-    private static final long serialVersionUID = -1811302245094462653L;
+    private static final long serialVersionUID = -6249104108788941131L;
 
-    private String id;
-    private String tree_id;
-    private boolean distinct;
-    private String message;
-    private String url;
-    private PersonIdent author;
-    private PersonIdent committer;
-    private List<String> added;
-    private List<String> removed;
-    private List<String> modified;
+    private int id;
+    private String name;
+    private String type;
+    private boolean active;
+    private List<String> events;
+    private Config config;
+
+    @Data
+    public static class Config implements Serializable {
+
+        private static final long serialVersionUID = -497411814487832323L;
+
+        private String content_type;
+        private String secret;
+        private String url;
+    }
 }

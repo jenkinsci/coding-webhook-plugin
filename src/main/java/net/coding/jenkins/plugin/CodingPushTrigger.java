@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,23 +19,7 @@
  */
 package net.coding.jenkins.plugin;
 
-import net.coding.jenkins.plugin.model.WebHook;
-import net.coding.jenkins.plugin.webhook.CodingWebHook;
-import net.coding.jenkins.plugin.webhook.TriggerHandler;
-import net.coding.jenkins.plugin.webhook.filter.BranchFilterConfig;
-import net.coding.jenkins.plugin.webhook.filter.BranchFilterFactory;
-import net.coding.jenkins.plugin.webhook.filter.BranchFilterType;
-
-import org.apache.commons.lang.StringUtils;
-import org.kohsuke.stapler.Ancestor;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
-
-import java.io.ObjectStreamException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import com.google.gson.Gson;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Item;
@@ -49,6 +34,21 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import net.coding.jenkins.plugin.bean.WebHookTask;
+import net.coding.jenkins.plugin.webhook.CodingWebHook;
+import net.coding.jenkins.plugin.webhook.IWebHookHelper;
+import net.coding.jenkins.plugin.webhook.TriggerHandler;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilterConfig;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilterFactory;
+import net.coding.jenkins.plugin.webhook.filter.BranchFilterType;
+import org.kohsuke.stapler.Ancestor;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest;
+
+import java.io.ObjectStreamException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author tsl0922
@@ -60,6 +60,7 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
 
     private String webHookToken;
     private String apiToken;
+    private String personalToken;
     private boolean triggerOnPush;
     private boolean triggerOnMergeRequest;
     private String mergeRequestTriggerAction;
@@ -75,13 +76,14 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
     private transient TriggerHandler triggerHandler;
 
     @DataBoundConstructor
-    public CodingPushTrigger(String webHookToken, String apiToken,
+    public CodingPushTrigger(String webHookToken, String apiToken, String personalToken,
                              boolean triggerOnMergeRequest, String mergeRequestTriggerAction,
                              boolean triggerOnPush, boolean addResultNote, boolean ciSkip,
                              BranchFilterType branchFilterType, String includeBranchesSpec,
                              String excludeBranchesSpec, String targetBranchRegex) {
         this.webHookToken = webHookToken;
         this.apiToken = apiToken;
+        this.personalToken = personalToken;
         this.triggerOnPush = triggerOnPush;
         this.triggerOnMergeRequest = triggerOnMergeRequest;
         this.mergeRequestTriggerAction = mergeRequestTriggerAction;
@@ -113,11 +115,16 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
         return super.readResolve();
     }
 
-    public void onPost(WebHook webHook, String event) {
-        if (StringUtils.isEmpty(webHookToken) || StringUtils.equals(webHookToken, webHook.getToken())) {
-            triggerHandler.handle(job, webHook, event, ciSkip);
+    public void onPost(WebHookTask task) {
+        IWebHookHelper helper = CodingWebHook.webHookHelper(task.getVersion());
+        if (helper == null) {
+            throw hudson.util.HttpResponses.error(400, "Bad Request");
+        }
+        if (helper.isSignatureValid(task, webHookToken)) {
+            triggerHandler.handle(job, task, ciSkip);
         } else {
-            LOGGER.log(Level.INFO, "Skipping due to invalid webHook token: {0}", webHook.getToken());
+            LOGGER.log(Level.INFO, "Skipping due to invalid Signature for webHookTask: {0}", new Gson().toJson(task));
+            throw hudson.util.HttpResponses.error(401, "Signature Invalid");
         }
     }
 
@@ -150,8 +157,7 @@ public class CodingPushTrigger extends Trigger<Job<?, ?>> {
             if (project != null) {
                 try {
                     return Messages.coding_trigger_title(retrieveProjectUrl(project));
-                } catch (IllegalStateException e) {
-                    // nothing to do
+                } catch (IllegalStateException ignored) {
                 }
             }
             return Messages.coding_trigger_title_unknown();

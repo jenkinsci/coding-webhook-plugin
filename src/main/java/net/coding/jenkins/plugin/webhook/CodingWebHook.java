@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,29 +21,6 @@ package net.coding.jenkins.plugin.webhook;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.gson.Gson;
-
-import net.coding.jenkins.plugin.CodingPushTrigger;
-import net.coding.jenkins.plugin.model.WebHook;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.remoting.RoleChecker;
-import org.kohsuke.stapler.HttpResponses;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -52,8 +30,23 @@ import hudson.remoting.Callable;
 import hudson.security.ACL;
 import hudson.security.csrf.CrumbExclusion;
 import jenkins.model.Jenkins;
+import net.coding.jenkins.plugin.CodingPushTrigger;
+import net.coding.jenkins.plugin.Utils;
+import net.coding.jenkins.plugin.bean.WebHookTask;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.remoting.RoleChecker;
+import org.kohsuke.stapler.HttpResponses;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author tsl0922
@@ -63,6 +56,7 @@ public class CodingWebHook implements UnprotectedRootAction {
     private static final Logger LOGGER = Logger.getLogger(CodingWebHook.class.getName());
 
     public static final String WEBHOOK_URL = "coding";
+    public static final String PERSONAL_TOKEN_HEADER = "Authorization";
     public static final String API_TOKEN_PARAM = "private_token";
 
     @Override
@@ -78,6 +72,30 @@ public class CodingWebHook implements UnprotectedRootAction {
     @Override
     public String getUrlName() {
         return WEBHOOK_URL;
+    }
+
+    public static IWebHookHelper webHookHelper(String version) {
+        switch (version) {
+            case WebHookHelperV2.version:
+                return new WebHookHelperV2();
+            case WebHookHelperV1.version:
+                return new WebHookHelperV1();
+            default:
+                LOGGER.log(Level.WARNING, "Unsupported WebHook Version: {0}", version);
+                return null;
+        }
+    }
+
+    private static String version(final StaplerRequest request) {
+        String version = request.getHeader("X-Coding-WebHook-Version");
+        if (StringUtils.isNotEmpty(version)) {
+            return version;
+        }
+        String delivery = request.getHeader("X-Coding-Delivery");
+        if (StringUtils.isNotEmpty(delivery)) {
+            return WebHookHelperV2.version;
+        }
+        return WebHookHelperV1.version;
     }
 
     public void getDynamic(final String projectName, final StaplerRequest request, StaplerResponse response) {
@@ -98,17 +116,38 @@ public class CodingWebHook implements UnprotectedRootAction {
                     throw hudson.util.HttpResponses.status(HttpServletResponse.SC_BAD_REQUEST);
                 }
                 if (StringUtils.equals(eventHeader, "ping")) {
-                    LOGGER.log(Level.INFO, "Received coding webHook ping: {0}", getRequestBody(request));
+                    LOGGER.log(Level.INFO, "Received coding webHook ping: {0}", Utils.getRequestBody(request));
                     throw hudson.util.HttpResponses.ok();
                 }
-                String json = getRequestBody(request);
-                LOGGER.log(Level.INFO, "WebHook payload: {0}", json);
-                WebHook webHook = new Gson().fromJson(json, WebHook.class);
+                IWebHookHelper helper = webHookHelper(version(request));
+                if (helper == null) {
+                    return;
+                }
+                WebHookTask task;
+                try {
+                    task = helper.parseTaskFromRequest(request);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Unexpected Exception occurred while parsing task from request");
+                    LOGGER.log(Level.FINEST, "Exception is " + e);
+                    throw hudson.util.HttpResponses.error(500, "Unexpected Exception occurred " +
+                            "while parsing task from request");
+                }
+
+                LOGGER.log(Level.FINEST, "Task is " + task);
+
+                if (!task.isParseSuccess()) {
+                    LOGGER.log(Level.WARNING, "Fail to parse request: {0}", task.getRequestBody());
+                }
+
                 ACL.impersonate(ACL.SYSTEM, () -> {
+                    LOGGER.log(Level.FINEST, "Finding CodingPushTrigger");
                     CodingPushTrigger trigger = CodingPushTrigger.getFromJob(project);
-                    if (trigger != null) {
-                        trigger.onPost(webHook, eventHeader);
+                    if (trigger == null) {
+                        LOGGER.log(Level.WARNING, "CodingPushTrigger not found");
+                        return;
                     }
+                    LOGGER.log(Level.FINEST, "CodingPushTrigger going to posting");
+                    trigger.onPost(task);
                 });
                 throw hudson.util.HttpResponses.ok();
             case "GET":
@@ -118,17 +157,6 @@ public class CodingWebHook implements UnprotectedRootAction {
                 LOGGER.log(Level.FINE, "Unsupported HTTP method: {0}", method);
                 break;
         }
-    }
-
-    private String getRequestBody(StaplerRequest request) {
-        String requestBody;
-        try {
-            Charset charset = request.getCharacterEncoding() == null ?  UTF_8 : Charset.forName(request.getCharacterEncoding());
-            requestBody = IOUtils.toString(request.getInputStream(), charset);
-        } catch (IOException e) {
-            throw HttpResponses.error(500, "Failed to read request body");
-        }
-        return requestBody;
     }
 
     private Job<?, ?> resolveProject(final String projectName, final Iterator<String> restOfPathParts) {

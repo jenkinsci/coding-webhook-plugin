@@ -1,7 +1,8 @@
 /**
  * Jenkins plugin for Coding https://coding.net
  *
- * Copyright (C) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-2018 Shuanglei Tao <tsl0922@gmail.com>
+ * Copyright (c) 2016-present, Coding, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +40,10 @@ import org.apache.http.message.BasicNameValuePair;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
@@ -51,6 +55,7 @@ import hudson.model.listeners.RunListener;
 import jenkins.model.Jenkins;
 
 import static net.coding.jenkins.plugin.webhook.CodingWebHook.API_TOKEN_PARAM;
+import static net.coding.jenkins.plugin.webhook.CodingWebHook.PERSONAL_TOKEN_HEADER;
 
 /**
  * @author tsl0922
@@ -68,14 +73,16 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
                 || build.getResult() == Result.NOT_BUILT) {
             return;
         }
+        String personalToken = trigger.getPersonalToken();
         String apiToken = trigger.getApiToken();
-        String projectPath = cause.getData().getProjectPath();
-        if (Strings.isNullOrEmpty(apiToken) || Strings.isNullOrEmpty(projectPath)) {
+        String projectWebUrl = cause.getData().getProjectHtmlUrl();
+        if ((Strings.isNullOrEmpty(personalToken) && Strings.isNullOrEmpty(apiToken))
+                || Strings.isNullOrEmpty(projectWebUrl)) {
             return;
         }
 
         String targetType;
-        int targetId = 0;
+        long targetId = 0;
         switch (cause.getData().getActionType()) {
             case PUSH:
                 targetType = "Commit";
@@ -96,20 +103,23 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
 
         if (trigger.isAddResultNote()) {
             addResultNote(
-                    apiToken, getBuildUrl(build),
+                    personalToken, apiToken, getBuildUrl(build),
                     cause.getData().getCommitId(),
                     success,
-                    projectPath, targetType, targetId
+                    projectWebUrl, targetType, targetId
             );
         }
     }
 
-    private void addResultNote(String apiToken, String buildUrl, String commitId, boolean success,
-                                      String projectPath, String targetType, int targetId) {
+    private void addResultNote(String personalToken, String apiToken, String buildUrl, String commitId, boolean success,
+                               String projectWebUrl, String targetType, long targetId) {
         String template = "Jenkins build **%s** for commit %s, Result: %s";
         String content = String.format(template, success ? "SUCCESS" : "FAILURE", commitId, buildUrl);
         HttpClient httpClient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(String.format("%s/git/line_notes", getApiUrl(projectPath)));
+        String postUrl = String.format("%s/git/line_notes", projectApiUrl(projectWebUrl));
+        HttpPost httpPost = new HttpPost(postUrl);
+        LOGGER.log(Level.FINEST, "Result Note to " + postUrl);
+
         List<NameValuePair> nvps = new ArrayList<>();
         if (StringUtils.equals(targetType, "Commit")) {
             nvps.add(new BasicNameValuePair("commitId", commitId));
@@ -117,12 +127,17 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
         nvps.add(new BasicNameValuePair("noteable_type", targetType));
         nvps.add(new BasicNameValuePair("noteable_id", String.valueOf(targetId)));
         nvps.add(new BasicNameValuePair("content", content));
-        nvps.add(new BasicNameValuePair(API_TOKEN_PARAM, apiToken));
+        if (!Strings.isNullOrEmpty(personalToken)) {
+            httpPost.setHeader(PERSONAL_TOKEN_HEADER, "token " + personalToken);
+        } else {
+            nvps.add(new BasicNameValuePair(API_TOKEN_PARAM, apiToken));
+        }
         try {
             httpPost.setEntity(new UrlEncodedFormEntity(nvps));
             HttpResponse response = httpClient.execute(httpPost);
             int code = response.getStatusLine().getStatusCode();
             String json = IOUtils.toString(response.getEntity().getContent());
+            LOGGER.log(Level.FINEST, "Result Note response " + json);
             JsonObject o = new JsonParser().parse(json).getAsJsonObject();
             if (code != HttpStatus.SC_OK || o.get("code").getAsInt() != 0) {
                 LOGGER.info(String.format("Failed to add note, code: %d, text: %s", code, json));
@@ -132,12 +147,26 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
         }
     }
 
-    private String getApiUrl(String projectPath) {
-        String[] parts = projectPath.split("/");
-        if (parts.length != 2) {
-            throw new IllegalArgumentException("Invalid project path: " + projectPath);
+    public String projectApiUrl(String htmlUrl) {
+
+        Pattern pattern = Pattern.compile("(https?://[^/]+)/[ut]/([^/]+)/p/([^/]+).*");
+        Matcher matcher = pattern.matcher(htmlUrl);
+        if (matcher.matches()) {
+            // is professional
+            return String.format("%s/api/user/%s/project/%s", matcher.group(1), matcher.group(2), matcher.group(3));
         }
-        return String.format("https://coding.net/api/user/%s/project/%s", parts[0], parts[1]);
+        pattern = Pattern.compile("(https?://[^/]+)/p/([^/]+).*");
+        matcher = pattern.matcher(htmlUrl);
+        if (matcher.matches()) {
+            // is enterprise
+            String host = matcher.group(1);
+            String projectName = matcher.group(2);
+            Matcher enterprise = Pattern.compile("https?://([^.]+).*").matcher(host);
+            if (enterprise.matches()) {
+                return String.format("%s/api/user/%s/project/%s", host, enterprise.group(1), projectName);
+            }
+        }
+        throw new IllegalArgumentException("Invalid project api url: " + htmlUrl);
     }
 
     private String getBuildUrl(Run<?, ?> build) {
