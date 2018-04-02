@@ -127,12 +127,12 @@ public class TriggerHandler {
     private Action[] createActions(Job<?, ?> job, WebHookTask task, ActionType actionType) {
         List<Action> actions = new ArrayList<>();
         actions.add(new CauseAction(new CodingWebHookCause(buildCauseData(task, actionType))));
-        try {
-            actions.add(createRevisionParameter(task, actionType));
-        } catch (IllegalStateException e) {
-            LOGGER.log(Level.WARNING, "Unable to build for req {0} for job {1}: {2}",
-                    new Object[]{task, (job != null ? job.getFullName() : null), e.getMessage()});
-        }
+//        try {
+//            actions.add(createRevisionParameter(task, actionType));
+//        } catch (IllegalStateException e) {
+//            LOGGER.log(Level.WARNING, "Unable to build for req {0} for job {1}: {2}",
+//                    new Object[]{task, (job != null ? job.getFullName() : null), e.getMessage()});
+//        }
         return actions.toArray(new Action[actions.size()]);
     }
 
@@ -171,7 +171,6 @@ public class TriggerHandler {
         }
         data.setRepoUrl(task.getRepository().getSsh_url());
         data.setProjectHtmlUrl(task.getRepository().getHtml_url());
-        data.setRepoUrl(task.getRepository().getSsh_url());
 
         switch (actionType) {
             case PUSH:

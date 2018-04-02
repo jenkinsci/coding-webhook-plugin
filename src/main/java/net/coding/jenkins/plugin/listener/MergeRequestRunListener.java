@@ -23,9 +23,17 @@ import com.google.common.base.Strings;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.Action;
+import hudson.model.BuildListener;
+import hudson.model.Environment;
+import hudson.plugins.git.RevisionParameterAction;
 import net.coding.jenkins.plugin.CodingPushTrigger;
+import net.coding.jenkins.plugin.cause.CauseData;
 import net.coding.jenkins.plugin.cause.CodingWebHookCause;
 
+import net.coding.jenkins.plugin.webhook.TriggerHandler;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -38,6 +46,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -53,6 +62,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import jenkins.model.Jenkins;
+import org.eclipse.jgit.transport.URIish;
 
 import static net.coding.jenkins.plugin.webhook.CodingWebHook.API_TOKEN_PARAM;
 import static net.coding.jenkins.plugin.webhook.CodingWebHook.PERSONAL_TOKEN_HEADER;
@@ -171,5 +181,31 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
 
     private String getBuildUrl(Run<?, ?> build) {
         return Strings.nullToEmpty(Jenkins.getInstance().getRootUrl()) + build.getUrl();
+    }
+
+    @Override
+    public void onStarted(Run<?, ?> run, TaskListener listener) {
+        CodingWebHookCause cause = run.getCause(CodingWebHookCause.class);
+        if (cause != null) {
+            RevisionParameterAction revisionParameterAction = run.getAction(RevisionParameterAction.class);
+            if (revisionParameterAction != null) {
+                LOGGER.log(Level.INFO, "Already existing a RevisionParameterAction");
+            } else {
+                run.addAction(createRevisionParameter(cause));
+            }
+        }
+        super.onStarted(run, listener);
+    }
+
+    private Action createRevisionParameter(CodingWebHookCause cause) {
+        CauseData causeData = cause.getData();
+        String revisionToBuild = causeData.getCommitId();
+        URIish urIish = null;
+        try {
+            urIish = new URIish(causeData.getRepoUrl());
+        } catch (URISyntaxException e) {
+            LOGGER.log(Level.WARNING, "could not parse URL");
+        }
+        return new RevisionParameterAction(revisionToBuild, urIish);
     }
 }
