@@ -127,36 +127,7 @@ public class TriggerHandler {
     private Action[] createActions(Job<?, ?> job, WebHookTask task, ActionType actionType) {
         List<Action> actions = new ArrayList<>();
         actions.add(new CauseAction(new CodingWebHookCause(buildCauseData(task, actionType))));
-//        try {
-//            actions.add(createRevisionParameter(task, actionType));
-//        } catch (IllegalStateException e) {
-//            LOGGER.log(Level.WARNING, "Unable to build for req {0} for job {1}: {2}",
-//                    new Object[]{task, (job != null ? job.getFullName() : null), e.getMessage()});
-//        }
         return actions.toArray(new Action[actions.size()]);
-    }
-
-    private RevisionParameterAction createRevisionParameter(WebHookTask task, ActionType actionType) {
-        return new RevisionParameterAction(retrieveRevisionToBuild(task, actionType), createUrIish(task));
-    }
-
-    private String retrieveRevisionToBuild(WebHookTask task, ActionType actionType) {
-        String revision = null;
-        switch (actionType) {
-            case PUSH:
-                revision = task.getPush().getAfter();
-                break;
-            case PR:
-            case MR:
-                revision = task.getMergeRequest().getMergeRequest().getMerge_commit_sha();
-                break;
-            default:
-                break;
-        }
-        if (StringUtils.isEmpty(revision)) {
-            throw new IllegalStateException("No revision to build");
-        }
-        return revision;
     }
 
     private CauseData buildCauseData(WebHookTask task, ActionType actionType) {
