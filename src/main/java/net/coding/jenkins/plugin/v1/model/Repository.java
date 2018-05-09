@@ -19,6 +19,7 @@
  */
 package net.coding.jenkins.plugin.v1.model;
 
+import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,7 +56,6 @@ public class Repository {
     }
 
     public String projectApiUrl() {
-
         Pattern pattern = Pattern.compile("(https?://[^/]+)/[ut]/([^/]+)/p/([^/]+).*");
         Matcher matcher = pattern.matcher(web_url);
         if (matcher.matches()) {
@@ -68,10 +68,17 @@ public class Repository {
             // is enterprise
             String host = matcher.group(1);
             String projectName = matcher.group(2);
-            System.out.println(host);
-            Matcher enterprise = Pattern.compile("https?://([^.]+).*").matcher(host);
-            if (enterprise.matches()) {
-                return String.format("%s/api/user/%s/project/%s", host, enterprise.group(1), projectName);
+            try {
+                String path = new URI(https_url).getPath();
+                path = path.substring(1).replace(".git", "");
+                String teamName = path.split("/")[0];
+                return String.format("%s/api/user/%s/project/%s", host, teamName, projectName);
+            } catch (Exception ignored) {
+                // Fallback
+                Matcher enterprise = Pattern.compile("https?://([^.]+).*").matcher(host);
+                if (enterprise.matches()) {
+                    return String.format("%s/api/user/%s/project/%s", host, enterprise.group(1), projectName);
+                }
             }
         }
         return "";

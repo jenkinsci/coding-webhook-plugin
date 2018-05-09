@@ -11,3 +11,6 @@ build/
 # Jenkins files
 work/
 out/
+
+# mac
+.DS_Store

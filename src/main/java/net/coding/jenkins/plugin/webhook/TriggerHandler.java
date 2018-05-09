@@ -142,6 +142,7 @@ public class TriggerHandler {
         }
         data.setRepoUrl(task.getRepository().getSsh_url());
         data.setProjectHtmlUrl(task.getRepository().getHtml_url());
+        data.setFullName(task.getRepository().getFull_name());
 
         switch (actionType) {
             case PUSH:

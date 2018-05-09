@@ -22,18 +22,17 @@ package net.coding.jenkins.plugin.listener;
 import com.google.common.base.Strings;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import hudson.Launcher;
-import hudson.model.AbstractBuild;
+import hudson.Extension;
 import hudson.model.Action;
-import hudson.model.BuildListener;
-import hudson.model.Environment;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.model.listeners.RunListener;
 import hudson.plugins.git.RevisionParameterAction;
+import jenkins.model.Jenkins;
 import net.coding.jenkins.plugin.CodingPushTrigger;
 import net.coding.jenkins.plugin.cause.CauseData;
 import net.coding.jenkins.plugin.cause.CodingWebHookCause;
-
-import net.coding.jenkins.plugin.webhook.TriggerHandler;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -44,7 +43,9 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.eclipse.jgit.transport.URIish;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -53,16 +54,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.annotation.Nonnull;
-
-import hudson.Extension;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.model.listeners.RunListener;
-import jenkins.model.Jenkins;
-import org.eclipse.jgit.transport.URIish;
 
 import static net.coding.jenkins.plugin.webhook.CodingWebHook.API_TOKEN_PARAM;
 import static net.coding.jenkins.plugin.webhook.CodingWebHook.PERSONAL_TOKEN_HEADER;
@@ -114,19 +105,20 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
         if (trigger.isAddResultNote()) {
             addResultNote(
                     personalToken, apiToken, getBuildUrl(build),
-                    cause.getData().getCommitId(),
+                    cause.getData(),
                     success,
-                    projectWebUrl, targetType, targetId
+                    targetType, targetId
             );
         }
     }
 
-    private void addResultNote(String personalToken, String apiToken, String buildUrl, String commitId, boolean success,
-                               String projectWebUrl, String targetType, long targetId) {
+    private void addResultNote(String personalToken, String apiToken, String buildUrl, CauseData causeData, boolean success,
+                               String targetType, long targetId) {
+        String commitId = causeData.getCommitId();
         String template = "Jenkins build **%s** for commit %s, Result: %s";
         String content = String.format(template, success ? "SUCCESS" : "FAILURE", commitId, buildUrl);
         HttpClient httpClient = HttpClients.createDefault();
-        String postUrl = String.format("%s/git/line_notes", projectApiUrl(projectWebUrl));
+        String postUrl = String.format("%s/git/line_notes", projectApiUrl(causeData));
         HttpPost httpPost = new HttpPost(postUrl);
         LOGGER.log(Level.FINEST, "Result Note to " + postUrl);
 
@@ -157,8 +149,9 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
         }
     }
 
-    public String projectApiUrl(String htmlUrl) {
-
+    public String projectApiUrl(CauseData causeData) {
+        String htmlUrl = causeData.getProjectHtmlUrl();
+        String fullName = causeData.getFullName();
         Pattern pattern = Pattern.compile("(https?://[^/]+)/[ut]/([^/]+)/p/([^/]+).*");
         Matcher matcher = pattern.matcher(htmlUrl);
         if (matcher.matches()) {
@@ -171,10 +164,8 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
             // is enterprise
             String host = matcher.group(1);
             String projectName = matcher.group(2);
-            Matcher enterprise = Pattern.compile("https?://([^.]+).*").matcher(host);
-            if (enterprise.matches()) {
-                return String.format("%s/api/user/%s/project/%s", host, enterprise.group(1), projectName);
-            }
+            String teamName = fullName.split("/")[0];
+            return String.format("%s/api/user/%s/project/%s", host, teamName, projectName);
         }
         throw new IllegalArgumentException("Invalid project api url: " + htmlUrl);
     }

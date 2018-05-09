@@ -37,6 +37,7 @@ public class CauseData {
 
 //    private String projectApiUrl;
     private String projectHtmlUrl;
+    private String fullName;
     private String ref;
     private String before;
     private String after;
