@@ -36,6 +36,7 @@ import org.apache.commons.lang.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.logging.Level;
@@ -180,6 +181,15 @@ public class WebHookHelperV1 implements IWebHookHelper {
         outputRepository.setSsh_url(repository.getSsh_url());
         outputRepository.setClone_url(repository.getHttps_url());
         outputRepository.setName(repository.getName());
+        try {
+            String httpsUrl = repository.getHttps_url();
+            String path = new URI(httpsUrl).getPath();
+            path = path.substring(1).replace(".git", "");
+            outputRepository.setFull_name(path);
+        } catch (Exception e) {
+            outputRepository.setFull_name("");
+            LOGGER.log(Level.WARNING, "fail to parse full name of repository", e);
+        }
         outputRepository.setDescription(repository.getDescription());
         outputRepository.setHtml_url(repository.getWeb_url());
         outputRepository.setOwner(to(repository.getOwner()));
