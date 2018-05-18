@@ -25,12 +25,12 @@ You may want to disable debug options to get faster page load time:
 ## Acknowledgements
 
 This project is started and based on the [gitlab-plugin][3], thanks for the great project.
-The coding-api module follows [github-api-plugin][6], and coding-auth module follows [github-oauth-plugin][7], thanks for them.
+The coding-api module follows [github-api][6], and coding-auth module follows [github-oauth-plugin][7], thanks for them.
 
   [1]: https://coding.net
   [2]: https://open.coding.net/webhooks
   [3]: https://github.com/jenkinsci/gitlab-plugin
   [4]: https://plugins.jenkins.io
   [5]: https://jenkins.io/doc/book/managing/plugins
-  [6]: https://github.com/jenkinsci/github-api-plugin
+  [6]: https://github.com/kohsuke/github-api
   [7]: https://github.com/jenkinsci/github-oauth-plugin
