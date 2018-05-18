@@ -1,0 +1,49 @@
+<!--
+
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:section title="${%coding.oauth.authorization.codingAuthorizationSettings}">
+        <f:entry title="${%coding.oauth.authorization.adminUserNames}"  field="adminUserNames" help="/plugin/coding-webhook/help/oauth/auth/admin-user-names-help.html" >
+            <f:textbox />
+        </f:entry>
+
+        <!--
+        <f:entry title="${%coding.oauth.authorization.organizationNames}"  field="organizationNames" help="/plugin/coding-webhook/help/oauth/auth/organization-names-help.html">
+            <f:textbox />
+        </f:entry>
+        -->
+
+        <!--
+        <f:entry title="${%coding.oauth.authorization.useRepositoryPermissions}" field="useRepositoryPermissions" help="/plugin/coding-webhook/help/oauth/auth/use-repository-permissions-help.html">
+            <f:checkbox />
+        </f:entry>
+        -->
+
+        <f:entry title="${%coding.oauth.authorization.authenticatedUserReadPermission}" field="authenticatedUserReadPermission" help="/plugin/coding-webhook/help/oauth/auth/grant-read-to-authenticated-help.html">
+             <f:checkbox />
+        </f:entry>
+
+        <f:entry title="${%coding.oauth.authorization.authenticatedUserCreateJobPermission}" field="authenticatedUserCreateJobPermission" help="/plugin/coding-webhook/help/oauth/auth/grant-create-job-to-authenticated-help.html">
+            <f:checkbox />
+        </f:entry>
+
+        <!--
+        <f:entry title="${%coding.oauth.authorization.allowCodingWebHookPermission}" field="allowCodingWebHookPermission" help="/plugin/coding-webhook/help/oauth/auth/grant-read-to-coding-webhook-help.html">
+            <f:checkbox />
+        </f:entry>
+        -->
+
+        <f:entry title="${%coding.oauth.authorization.allowCcTrayPermission}" field="allowCcTrayPermission" help="/plugin/coding-webhook/help/oauth/auth/grant-read-to-cctray-help.html">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry title="${%coding.oauth.authorization.allowAnonymousReadPermission}" field="allowAnonymousReadPermission" help="/plugin/coding-webhook/help/oauth/auth/grant-read-to-anonymous-help.html">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry title="${%coding.oauth.authorization.allowAnonymousJobStatusPermission}" field="allowAnonymousJobStatusPermission" help="/plugin/coding-webhook/help/oauth/auth/grant-viewstatus-to-anonymous-help.html">
+            <f:checkbox />
+        </f:entry>
+    </f:section>
+</j:jelly>

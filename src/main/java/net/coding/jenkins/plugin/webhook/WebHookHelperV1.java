@@ -35,13 +35,11 @@ import net.coding.jenkins.plugin.v1.model.WebHook;
 import org.apache.commons.lang.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class WebHookHelperV1 implements IWebHookHelper {
     public static final String version = "v1";
@@ -203,7 +201,11 @@ public class WebHookHelperV1 implements IWebHookHelper {
         if (commits == null) {
             return null;
         }
-        return commits.stream().map(this::to).collect(Collectors.toList());
+        List<net.coding.jenkins.plugin.model.Commit> result = new ArrayList<>(commits.size());
+        for (Commit commit: commits) {
+            result.add(to(commit));
+        }
+        return result;
     }
 
     private net.coding.jenkins.plugin.model.Commit to(net.coding.jenkins.plugin.v1.model.Commit commit) {
