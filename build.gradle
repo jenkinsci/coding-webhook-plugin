@@ -73,7 +73,7 @@ task wrapper(type: Wrapper) {
 
 license {
     header project.file('LICENSE_HEADER')
-    excludes (["**/webhook/filter/*.java", "**/Messages.java"])
+    excludes (["**/webhook/filter/*.java", "**/Messages.java", "**/net/coding/jenkins/plugin/oauth/**", "**/net/coding/api/**"])
 }
 
 jenkinsPlugin {
