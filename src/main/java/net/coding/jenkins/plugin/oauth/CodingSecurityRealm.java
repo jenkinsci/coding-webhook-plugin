@@ -61,6 +61,7 @@ import org.acegisecurity.userdetails.UserDetails;
 import org.acegisecurity.userdetails.UserDetailsService;
 import org.acegisecurity.userdetails.UsernameNotFoundException;
 import org.apache.commons.httpclient.URIException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -89,6 +90,7 @@ import java.io.Console;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -137,12 +139,13 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
 
         this.codingWebUri = CodingUtil.fixEndwithSlash(Util.fixEmptyAndTrim(codingWebUri));
         this.codingApiUri = CodingUtil.fixEndwithSlash(Util.fixEmptyAndTrim(codingApiUri));
-        this.clientID     = Util.fixEmptyAndTrim(clientID);
+        this.clientID = Util.fixEmptyAndTrim(clientID);
         setClientSecret(Util.fixEmptyAndTrim(clientSecret));
-        this.oauthScopes  = Util.fixEmptyAndTrim(oauthScopes);
+        this.oauthScopes = Util.fixEmptyAndTrim(oauthScopes);
     }
 
-    private CodingSecurityRealm() {    }
+    private CodingSecurityRealm() {
+    }
 
     /**
      * Tries to automatically determine the Coding API URI based on
@@ -152,7 +155,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
      * @return The expected API URI for the given Web UI
      */
     private String determineApiUri(String codingWebUri) {
-        if(codingWebUri.equals(DEFAULT_WEB_URI)) {
+        if (codingWebUri.equals(DEFAULT_WEB_URI)) {
             return DEFAULT_API_URI;
         } else {
             return codingWebUri + DEFAULT_ENTERPRISE_API_SUFFIX;
@@ -195,7 +198,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
      * @return true if security realm has the scope or false if it does not.
      */
     public boolean hasScope(String scope) {
-        if(this.myScopes == null) {
+        if (this.myScopes == null) {
             this.myScopes = this.oauthScopes.split(",");
             Arrays.sort(this.myScopes);
         }
@@ -225,7 +228,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
         }
 
         public void marshal(Object source, HierarchicalStreamWriter writer,
-                MarshallingContext context) {
+                            MarshallingContext context) {
             CodingSecurityRealm realm = (CodingSecurityRealm) source;
 
             writer.startNode("codingWebUri");
@@ -251,7 +254,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
         }
 
         public Object unmarshal(HierarchicalStreamReader reader,
-                UnmarshallingContext context) {
+                                UnmarshallingContext context) {
 
             CodingSecurityRealm realm = new CodingSecurityRealm();
 
@@ -330,20 +333,20 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
 
     public HttpResponse doCommenceLogin(StaplerRequest request, @Header("Referer") final String referer)
             throws IOException {
-        request.getSession().setAttribute(REFERER_ATTRIBUTE,referer);
+        request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
 
         Set<String> scopes = new HashSet<>();
         for (CodingOAuthScope s : getJenkins().getExtensionList(CodingOAuthScope.class)) {
             scopes.addAll(s.getScopesToRequest());
         }
-        String suffix="&response_type=code";
+        String suffix = "&response_type=code";
 
         // TODO: can be removed when fix https://codingcorp.coding.net/p/coding-dev/task/85488
         String redirectUri = getJenkins().getRootUrl() + "securityRealm/finishLogin";
         suffix += "&redirect_uri=" + redirectUri;
 
         if (!scopes.isEmpty()) {
-            suffix += "&scope="+ Util.join(scopes,",");
+            suffix += "&scope=" + Util.join(scopes, ",");
         } else {
             // We need repo scope in order to access private repos
             // see https://open.coding.net/references/personal-access-token/#%E8%AE%BF%E9%97%AE%E4%BB%A4%E7%89%8C%E7%9A%84%E6%9D%83%E9%99%90
@@ -390,14 +393,14 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
             u.setFullName(self.getName());
             // Set email from coding only if empty
             if (!u.getProperty(Mailer.UserProperty.class).hasExplicitlyConfiguredAddress()) {
-                if(hasScope("user") || hasScope("user:email")) {
+                if (hasScope("user") || hasScope("user:email")) {
                     String primary_email = null;
-                    for(CodingEmail e : self.getEmails2()) {
-                        if(e.isPrimary()) {
+                    for (CodingEmail e : self.getEmails2()) {
+                        if (e.isPrimary()) {
                             primary_email = e.getEmail();
                         }
                     }
-                    if(primary_email != null) {
+                    if (primary_email != null) {
                         u.addProperty(new Mailer.UserProperty(primary_email));
                     }
                 } else {
@@ -416,8 +419,8 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
             LOGGER.info("Coding did not return an access token.");
         }
 
-        String referer = (String)request.getSession().getAttribute(REFERER_ATTRIBUTE);
-        if (referer!=null)  return HttpResponses.redirectTo(referer);
+        String referer = (String) request.getSession().getAttribute(REFERER_ATTRIBUTE);
+        if (referer != null) return HttpResponses.redirectTo(referer);
         return HttpResponses.redirectToContextRoot();   // referer should be always there, but be defensive
     }
 
@@ -431,6 +434,22 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
             entityList.add(new BasicNameValuePair("client_id", clientID));
             entityList.add(new BasicNameValuePair("client_secret", clientSecret.getPlainText()));
             entityList.add(new BasicNameValuePair("code", code));
+
+            String team = "private";
+            try {
+                URI uri = new URI(codingWebUri);
+                String host = uri.getHost();
+                // real enterprise
+                if (StringUtils.endsWithIgnoreCase(host, ".coding.net") ||
+                        StringUtils.equalsIgnoreCase(host, "coding.net")) {
+                    team = null;
+                }
+            } catch (Exception e) {
+                LOGGER.fine("error to parse team from webUrl " + e);
+            }
+            if (team != null) {
+                entityList.add(new BasicNameValuePair("team", team));
+            }
             httpost.setEntity(new UrlEncodedFormEntity(entityList));
             HttpHost proxy = getProxy(httpost);
             if (proxy != null) {
@@ -456,18 +475,18 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
      */
     private HttpHost getProxy(HttpUriRequest method) throws URIException {
         ProxyConfiguration proxy = getJenkins().proxy;
-        if (proxy==null)    return null;    // defensive check
+        if (proxy == null) return null;    // defensive check
 
         Proxy p = proxy.createProxy(method.getURI().getHost());
         switch (p.type()) {
-        case DIRECT:
-            return null;        // no proxy
-        case HTTP:
-            InetSocketAddress sa = (InetSocketAddress) p.address();
-            return new HttpHost(sa.getHostName(),sa.getPort());
-        case SOCKS:
-        default:
-            return null;        // not supported yet
+            case DIRECT:
+                return null;        // no proxy
+            case HTTP:
+                InetSocketAddress sa = (InetSocketAddress) p.address();
+                return new HttpHost(sa.getHostName(), sa.getPort());
+            case SOCKS:
+            default:
+                return null;        // not supported yet
         }
     }
 
@@ -496,7 +515,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
                         SecurityContextHolder.getContext().setAuthentication(coding);
 
                         User user = User.getById(token.getName(), false);
-                        if(user != null){
+                        if (user != null) {
                             CodingSecretStorage.put(user, token.getCredentials().toString());
                         }
 
@@ -504,7 +523,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
 
                         return coding;
                     } catch (IOException e) {
-                            throw new RuntimeException(e);
+                        throw new RuntimeException(e);
                     }
                 throw new BadCredentialsException(
                         "Unexpected authentication type: " + authentication);
@@ -521,7 +540,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
     protected CodingOAuthUserDetails authenticate(String username, String password) throws AuthenticationException {
         try {
             CodingAuthenticationToken coding = new CodingAuthenticationToken(password, getCodingApiUri());
-            if(username.equals(coding.getPrincipal())) {
+            if (username.equals(coding.getPrincipal())) {
                 SecurityContextHolder.getContext().setAuthentication(coding);
                 return coding.getUserDetails(username);
             }
@@ -534,32 +553,32 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
     @Override
     public CliAuthenticator createCliAuthenticator(final CLICommand command) {
         return new CliAuthenticator() {
-            @Option(name="--username",usage="Coding username to authenticate yourself to Jenkins.")
+            @Option(name = "--username", usage = "Coding username to authenticate yourself to Jenkins.")
             public String userName;
 
-            @Option(name="--password",usage="Coding personal access token. Note that passing a password in arguments is insecure.")
+            @Option(name = "--password", usage = "Coding personal access token. Note that passing a password in arguments is insecure.")
             public String password;
 
-            @Option(name="--password-file",usage="File that contains the personal access token.")
+            @Option(name = "--password-file", usage = "File that contains the personal access token.")
             public String passwordFile;
 
             public Authentication authenticate() throws AuthenticationException, IOException, InterruptedException {
-                if(userName == null) {
+                if (userName == null) {
                     // no authentication parameter. fallback to the transport
                     return command.getTransportAuthentication();
                 }
-                if(passwordFile != null) {
+                if (passwordFile != null) {
                     try {
                         password = new FilePath(command.channel, passwordFile).readToString().trim();
                     } catch (IOException e) {
                         throw new BadCredentialsException("Failed to read " + passwordFile, e);
                     }
                 }
-                if(password == null) {
+                if (password == null) {
                     password = command.channel.call(new InteractivelyAskForPassword());
                 }
 
-                if(password == null) {
+                if (password == null) {
                     throw new BadCredentialsException("No Coding personal access token specified.");
                 }
                 CodingSecurityRealm.this.authenticate(userName, password);
@@ -582,7 +601,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
         if (j.hasPermission(Jenkins.READ)) {
             return super.getPostLogOutUrl(req, auth);
         }
-        return req.getContextPath()+ "/" + CodingLogoutAction.POST_LOGOUT_URL;
+        return req.getContextPath() + "/" + CodingLogoutAction.POST_LOGOUT_URL;
     }
 
     @Extension
@@ -642,7 +661,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException, DataAccessException {
         //username is in org*team format
-        if(username.contains(CodingOAuthGroupDetails.ORG_TEAM_SEPARATOR)) {
+        if (username.contains(CodingOAuthGroupDetails.ORG_TEAM_SEPARATOR)) {
             throw new UsernameNotFoundException("Using org*team format instead of username: " + username);
         }
 
@@ -651,7 +670,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
         Authentication token = SecurityContextHolder.getContext().getAuthentication();
 
         if (token == null) {
-            if(localUser != null && CodingSecretStorage.contains(localUser)){
+            if (localUser != null && CodingSecretStorage.contains(localUser)) {
                 String accessToken = CodingSecretStorage.retrieve(localUser);
                 try {
                     token = new CodingAuthenticationToken(accessToken, getCodingApiUri());
@@ -659,7 +678,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
                     throw new UserMayOrMayNotExistException("Could not connect to Coding API server, target URL = " + getCodingApiUri(), e);
                 }
                 SecurityContextHolder.getContext().setAuthentication(token);
-            }else{
+            } else {
                 throw new UserMayOrMayNotExistException("Could not get auth token.");
             }
         }
@@ -693,7 +712,7 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
 
             return userDetails;
         } catch (IOException | Error e) {
-            throw new DataRetrievalFailureException("loadUserByUsername (username=" + username +")", e);
+            throw new DataRetrievalFailureException("loadUserByUsername (username=" + username + ")", e);
         }
     }
 
@@ -703,14 +722,14 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
      * @return true if the objects are the same instance and configuration.
      */
     @Override
-    public boolean equals(Object object){
-        if(object instanceof CodingSecurityRealm) {
+    public boolean equals(Object object) {
+        if (object instanceof CodingSecurityRealm) {
             CodingSecurityRealm obj = (CodingSecurityRealm) object;
             return this.getCodingWebUri().equals(obj.getCodingWebUri()) &&
-                this.getCodingApiUri().equals(obj.getCodingApiUri()) &&
-                this.getClientID().equals(obj.getClientID()) &&
-                this.getClientSecret().equals(obj.getClientSecret()) &&
-                this.getOauthScopes().equals(obj.getOauthScopes());
+                    this.getCodingApiUri().equals(obj.getCodingApiUri()) &&
+                    this.getClientID().equals(obj.getClientID()) &&
+                    this.getClientSecret().equals(obj.getClientSecret()) &&
+                    this.getOauthScopes().equals(obj.getOauthScopes());
         } else {
             return false;
         }
@@ -737,9 +756,9 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
     @Override
     public GroupDetails loadGroupByGroupname(String groupName)
             throws UsernameNotFoundException, DataAccessException {
-        CodingAuthenticationToken authToken =  (CodingAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        CodingAuthenticationToken authToken = (CodingAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
 
-        if(authToken == null)
+        if (authToken == null)
             throw new UsernameNotFoundException("No known group: " + groupName);
 
         try {
@@ -779,23 +798,24 @@ public class CodingSecurityRealm extends AbstractPasswordBasedSecurityRealm impl
      */
     private static final Logger LOGGER = Logger.getLogger(CodingSecurityRealm.class.getName());
 
-    private static final String REFERER_ATTRIBUTE = CodingSecurityRealm.class.getName()+".referer";
+    private static final String REFERER_ATTRIBUTE = CodingSecurityRealm.class.getName() + ".referer";
 
     /**
      * Asks for the password.
      */
-    private static class InteractivelyAskForPassword extends MasterToSlaveCallable<String,IOException> {
+    private static class InteractivelyAskForPassword extends MasterToSlaveCallable<String, IOException> {
         public String call() throws IOException {
             Console console = System.console();
-            if(console == null) {
+            if (console == null) {
                 return null;    // no terminal
             }
             char[] w = console.readPassword("Coding Personal Access Token: ");
-            if(w==null) {
+            if (w == null) {
                 return null;
             }
             return new String(w);
         }
+
         private static final long serialVersionUID = 1L;
     }
 }
