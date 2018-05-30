@@ -139,16 +139,7 @@ public class CodingWebHook implements UnprotectedRootAction {
                     LOGGER.log(Level.WARNING, "Fail to parse request: {0}", task.getRequestBody());
                 }
 
-                ACL.impersonate(ACL.SYSTEM, () -> {
-                    LOGGER.log(Level.FINEST, "Finding CodingPushTrigger");
-                    CodingPushTrigger trigger = CodingPushTrigger.getFromJob(project);
-                    if (trigger == null) {
-                        LOGGER.log(Level.WARNING, "CodingPushTrigger not found");
-                        return;
-                    }
-                    LOGGER.log(Level.FINEST, "CodingPushTrigger going to posting");
-                    trigger.onPost(task);
-                });
+                ACL.impersonate(ACL.SYSTEM, new PostTaskRunnable(project, task));
                 throw hudson.util.HttpResponses.ok();
             case "GET":
                 throw hudson.util.HttpResponses.errorWithoutStack(400, "This url is not intend" +
@@ -156,6 +147,29 @@ public class CodingWebHook implements UnprotectedRootAction {
             default:
                 LOGGER.log(Level.FINE, "Unsupported HTTP method: {0}", method);
                 break;
+        }
+    }
+
+    public static class PostTaskRunnable implements Runnable {
+
+        private final Job<?, ?> project;
+        private final WebHookTask task;
+
+        public PostTaskRunnable(Job<?, ?> project, WebHookTask task) {
+            this.project = project;
+            this.task = task;
+        }
+
+        @Override
+        public void run() {
+            LOGGER.log(Level.FINEST, "Finding CodingPushTrigger");
+            CodingPushTrigger trigger = CodingPushTrigger.getFromJob(project);
+            if (trigger == null) {
+                LOGGER.log(Level.WARNING, "CodingPushTrigger not found");
+                return;
+            }
+            LOGGER.log(Level.FINEST, "CodingPushTrigger going to posting");
+            trigger.onPost(task);
         }
     }
 

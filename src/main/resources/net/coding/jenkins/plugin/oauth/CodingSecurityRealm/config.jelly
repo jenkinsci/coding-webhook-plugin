@@ -1,0 +1,29 @@
+<!--
+
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:section title="${%coding.oauth.globalOauthSetting}" >
+        <f:entry title="${%coding.oauth.codingWebUri}"  field="codingWebUri" help="/plugin/coding-webhook/help/oauth/realm/coding-web-uri-help.html">
+            <f:textbox default="${descriptor.getDefaultCodingWebUri()}" />
+        </f:entry>
+
+        <!--
+            <f:entry title="${%coding.oauth.codingApiUri}"  field="codingApiUri" help="/plugin/coding-webhook/help/oauth/realm/coding-api-uri-help.html">
+                <f:textbox default="${descriptor.getDefaultCodingApiUri()}" />
+            </f:entry>
+        -->
+
+        <f:entry title="${%coding.oauth.clientID}"  field="clientID" help="/plugin/coding-webhook/help/oauth/realm/client-id-help.html">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%coding.oauth.clientSecret}" field="clientSecret" help="/plugin/coding-webhook/help/oauth/realm/client-secret-help.html">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="${%coding.oauth.oauthScopes}" field="oauthScopes" help="/plugin/coding-webhook/help/oauth/realm/oauth-scopes-help.html">
+            <f:textbox default="${descriptor.getDefaultOauthScopes()}" />
+        </f:entry>
+    </f:section>
+</j:jelly>
