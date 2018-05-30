@@ -77,7 +77,7 @@ license {
 }
 
 jenkinsPlugin {
-    coreVersion = '2.7.1'
+    coreVersion = '2.7.3'
     shortName = 'coding-webhook'
     displayName = 'Coding Webhook Plugin'
     url = 'https://wiki.jenkins.io/display/JENKINS/Coding+Webhook+Plugin'
