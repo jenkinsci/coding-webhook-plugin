@@ -38,9 +38,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.jgit.transport.URIish;
@@ -115,34 +115,41 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
     private void addResultNote(String personalToken, String apiToken, String buildUrl, CauseData causeData, boolean success,
                                String targetType, long targetId) {
         String commitId = causeData.getCommitId();
-        String template = "Jenkins build **%s** for commit %s, Result: %s";
-        String content = String.format(template, success ? "SUCCESS" : "FAILURE", commitId, buildUrl);
-        HttpClient httpClient = HttpClients.createDefault();
-        String postUrl = String.format("%s/git/line_notes", projectApiUrl(causeData));
+        String postUrl = String.format("%s/git/mark", projectApiUrl(causeData));
         HttpPost httpPost = new HttpPost(postUrl);
-        LOGGER.log(Level.FINEST, "Result Note to " + postUrl);
+        LOGGER.log(Level.FINEST, "Result Note to {0}", postUrl);
 
         List<NameValuePair> nvps = new ArrayList<>();
-        if (StringUtils.equals(targetType, "Commit")) {
-            nvps.add(new BasicNameValuePair("commitId", commitId));
+        nvps.add(new BasicNameValuePair("icon", "jenkins"));
+        nvps.add(new BasicNameValuePair("name", "Jenkins"));
+        nvps.add(new BasicNameValuePair("url", buildUrl));
+        nvps.add(new BasicNameValuePair("status", success ? "1" : "2"));
+        nvps.add(new BasicNameValuePair("markable_type", targetType));
+        if (StringUtils.equals(targetType, "MergeRequestBean")) {
+            nvps.add(new BasicNameValuePair("markable_id", String.valueOf(targetId)));
+            String template = "build %s for merge request %s";
+            String content = String.format(template, success ? "SUCCESS" : "FAILURE", causeData.getMergeRequestTitle());
+            nvps.add(new BasicNameValuePair("description", content));
+        } else if (StringUtils.equals(targetType, "Commit")) {
+            nvps.add(new BasicNameValuePair("sha", commitId));
+            String template = "build %s for commit %s";
+            String content = String.format(template, success ? "SUCCESS" : "FAILURE", commitId);
+            nvps.add(new BasicNameValuePair("description", content));
         }
-        nvps.add(new BasicNameValuePair("noteable_type", targetType));
-        nvps.add(new BasicNameValuePair("noteable_id", String.valueOf(targetId)));
-        nvps.add(new BasicNameValuePair("content", content));
         if (!Strings.isNullOrEmpty(personalToken)) {
             httpPost.setHeader(PERSONAL_TOKEN_HEADER, "token " + personalToken);
         } else {
             nvps.add(new BasicNameValuePair(API_TOKEN_PARAM, apiToken));
         }
-        try {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             httpPost.setEntity(new UrlEncodedFormEntity(nvps));
             HttpResponse response = httpClient.execute(httpPost);
             int code = response.getStatusLine().getStatusCode();
             String json = IOUtils.toString(response.getEntity().getContent());
-            LOGGER.log(Level.FINEST, "Result Note response " + json);
+            LOGGER.log(Level.FINEST, "Result Note response {0}", json);
             JsonObject o = new JsonParser().parse(json).getAsJsonObject();
             if (code != HttpStatus.SC_OK || o.get("code").getAsInt() != 0) {
-                LOGGER.info(String.format("Failed to add note, code: %d, text: %s", code, json));
+                LOGGER.log(Level.INFO, "Failed to add note, code: {0}, text: {1}", new Object[]{code, json});
             }
         } catch (IOException e) {
             LOGGER.warning("Failed to add commit note: " + e.getMessage());
@@ -171,7 +178,11 @@ public class MergeRequestRunListener extends RunListener<Run<?, ?>> {
     }
 
     private String getBuildUrl(Run<?, ?> build) {
-        return Strings.nullToEmpty(Jenkins.getInstance().getRootUrl()) + build.getUrl();
+        String rootUrl = Jenkins.getInstance().getRootUrl();
+        if (StringUtils.isBlank(rootUrl)) {
+            return "";
+        }
+        return rootUrl + build.getUrl();
     }
 
     @Override
