@@ -29,6 +29,7 @@ import net.coding.jenkins.plugin.model.event.Push;
 import net.coding.jenkins.plugin.webhook.filter.BranchFilter;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.URIish;
 
@@ -41,7 +42,6 @@ import java.util.logging.Logger;
 import hudson.model.Action;
 import hudson.model.CauseAction;
 import hudson.model.Job;
-import hudson.plugins.git.RevisionParameterAction;
 import jenkins.model.ParameterizedJobMixIn;
 
 import static net.coding.jenkins.plugin.cause.CauseData.ActionType;
@@ -71,6 +71,7 @@ public class TriggerHandler {
         boolean shouldTrigger = false;
         ActionType actionType = null;
         String branch = null;
+        String fullRefsName = null;
         String event = task.getEvent();
         LOGGER.log(Level.FINEST, "handle web_hook for event: {0}", event);
         switch (event) {
@@ -78,7 +79,8 @@ public class TriggerHandler {
                 if (isNoRemoveBranchPush(task)) {
                     shouldTrigger = triggerOnPush;
                     actionType = ActionType.PUSH;
-                    branch = shortenRef(task.getPush().getRef());
+                    fullRefsName = task.getPush().getRef();
+                    branch = shortenRef(fullRefsName);
                 }
                 break;
             case WebHookTask.EVENT_MERGE_REQUEST:
@@ -92,6 +94,7 @@ public class TriggerHandler {
                 shouldTrigger = triggerOnMergeRequest;
                 actionType = ActionType.MR;
                 branch = mergeRequest.getBase().getRef();
+                fullRefsName = Constants.R_HEADS + branch;
                 break;
             default:
                 break;
@@ -103,8 +106,8 @@ public class TriggerHandler {
             LOGGER.log(Level.INFO, "Skipping due to ci-skip.");
             return;
         }
-        if (!branchFilter.isBranchAllowed(branch)) {
-            LOGGER.log(Level.INFO, "Branch {0} is not allowed", branch);
+        if (!branchFilter.isBranchAllowed(branch) && !branchFilter.isBranchAllowed(fullRefsName)) {
+            LOGGER.log(Level.INFO, "Branch {0} and Ref {1} is not allowed", new Object[]{branch, fullRefsName});
             return;
         }
         if (shouldTrigger) {
