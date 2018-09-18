@@ -35,9 +35,6 @@ import jenkins.branch.MultiBranchProject;
 import jenkins.model.Jenkins;
 import jenkins.scm.api.SCMSource;
 import org.acegisecurity.Authentication;
-import org.jenkinsci.plugins.github_branch_source.GitHubSCMSource;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -276,20 +273,14 @@ public class CodingRequireOrganizationMembershipACL extends ACL {
         String repositoryName = null;
         String repoUrl = null;
         Describable scm = null;
-        if (this.item instanceof WorkflowJob) {
-            WorkflowJob project = (WorkflowJob) item;
-            scm = project.getProperty(BranchJobProperty.class).getBranch().getScm();
-        } else if (this.item instanceof MultiBranchProject) {
+        if (this.item instanceof MultiBranchProject) {
             MultiBranchProject project = (MultiBranchProject) item;
             scm = (SCMSource) project.getSCMSources().get(0);
         } else if (this.item instanceof AbstractProject) {
             AbstractProject project = (AbstractProject) item;
             scm = project.getScm();
         }
-        if (scm instanceof GitHubSCMSource) {
-            GitHubSCMSource git = (GitHubSCMSource) scm;
-            repoUrl = git.getRemote();
-        } else if (scm instanceof GitSCM) {
+        if (scm instanceof GitSCM) {
             GitSCM git = (GitSCM) scm;
             List<UserRemoteConfig> userRemoteConfigs = git.getUserRemoteConfigs();
             if (!userRemoteConfigs.isEmpty()) {
