@@ -154,6 +154,9 @@ public class TriggerHandler {
                 data.setBefore(push.getBefore());
                 data.setAfter(push.getAfter());
                 data.setCommitId(push.getAfter());
+                if (push.getHead_commit() != null) {
+                    data.setCommitId(push.getHead_commit().getId());
+                }
                 break;
             case MR:
                 MergeRequest mr = task.getMergeRequest().getMergeRequest();

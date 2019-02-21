@@ -59,7 +59,7 @@ dependencies {
 
 group = 'org.jenkins-ci.plugins'
 description = 'Webhook trigger for Coding (https://coding.net)'
-version = '1.4.2'
+version = '1.4.3'
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
