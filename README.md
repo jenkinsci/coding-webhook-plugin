@@ -1,3 +1,6 @@
+This project is archived in favor of coding's [official jenkins integration](https://help.coding.net/docs/project-settings/service-hook/service.html#jenkins).
+
+-------------
 # Jenkins Coding Webhook Plugin [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins%2Fcoding-webhook-plugin%2Fmaster)](https://ci.jenkins.io/job/Plugins/job/coding-webhook-plugin/job/master/)
 
 This plugin integrates [Coding][1] with Jenkins. It handles [WebHook][2] request and triggers
